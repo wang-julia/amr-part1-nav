@@ -1,0 +1,30 @@
+{
+  "scene": "A small group is partially blocking the shared office corridor.",
+  "objects": [
+    {
+      "type": "group",
+      "image_position": "center",
+      "path_relation": "on_planned_path",
+      "distance_estimate": "near",
+      "motion_state": "stationary",
+      "facing_direction": "unknown",
+      "social_radius": 20,
+      "semantic_cost": 240,
+      "reason": "Avoid cutting through a group and preserve a respectful passing distance."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward-right",
+    "lidar_summary": "Front has a soft return, front-left is occupied, and right is clearer.",
+    "depth_summary": "Group detected in the central near field; free space remains to the right."
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center",
+      "radius": 20,
+      "cost": 240
+    }
+  ],
+  "navigation_advice": "A slightly longer route around the group is lower risk than the shortest path."
+}

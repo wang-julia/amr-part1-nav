@@ -1,0 +1,38 @@
+{
+  "scene": "Office hallway. A person is walking near the robot's planned path and facing forward-left across the corridor.",
+  "objects": [
+    {
+      "type": "person",
+      "image_position": "center-right",
+      "path_relation": "near_planned_path",
+      "distance_estimate": "near",
+      "motion_state": "walking",
+      "facing_direction": "forward-left",
+      "social_radius": 16,
+      "semantic_cost": 225,
+      "reason": "Maintain personal space and account for the pedestrian's likely walking direction."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward-right",
+    "lidar_summary": "Front is clear but front-right has a soft return.",
+    "depth_summary": "Near walking person detected at center-right."
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center-right",
+      "radius": 16,
+      "cost": 225
+    },
+    {
+      "shape": "directional_ellipse",
+      "center": "center-right",
+      "direction": "forward-left",
+      "length": 20,
+      "width": 8,
+      "cost": 205
+    }
+  ],
+  "navigation_advice": "Prefer a wider route that avoids both current personal space and likely near-term pedestrian motion."
+}

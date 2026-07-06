@@ -1,0 +1,15 @@
+{
+  "name": "Group blocking corridor",
+  "scene": "A group of people is standing in a shared corridor, creating a high social discomfort zone.",
+  "start": [10, 90],
+  "goal": [90, 10],
+  "objects": [
+    {
+      "type": "group",
+      "position": "center",
+      "social_radius": 26,
+      "cost": 240
+    }
+  ],
+  "navigation_advice": "Avoid cutting through the group. Select a route that keeps a respectful distance."
+}

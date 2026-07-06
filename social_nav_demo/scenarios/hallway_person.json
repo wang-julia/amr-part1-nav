@@ -1,0 +1,21 @@
+{
+  "name": "Person in hallway",
+  "scene": "Indoor hallway with one person standing near the robot's shortest path.",
+  "start": [10, 90],
+  "goal": [90, 10],
+  "objects": [
+    {
+      "type": "person",
+      "position": "center-right",
+      "social_radius": 18,
+      "cost": 225
+    },
+    {
+      "type": "doorway",
+      "position": "center-left",
+      "social_radius": 12,
+      "cost": 120
+    }
+  ],
+  "navigation_advice": "Avoid passing too close to the person. Prefer a slightly wider route through lower social-cost space."
+}

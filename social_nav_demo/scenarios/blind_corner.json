@@ -1,0 +1,21 @@
+{
+  "name": "Blind corner and doorway",
+  "scene": "A doorway and blind corner create uncertain space where people may suddenly appear.",
+  "start": [10, 90],
+  "goal": [90, 10],
+  "objects": [
+    {
+      "type": "blind_corner",
+      "position": "far-center",
+      "social_radius": 16,
+      "cost": 160
+    },
+    {
+      "type": "doorway",
+      "position": "center-right",
+      "social_radius": 14,
+      "cost": 135
+    }
+  ],
+  "navigation_advice": "Slow down and avoid hugging the blind corner. Prefer a route with more visibility."
+}

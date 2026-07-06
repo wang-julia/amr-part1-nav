@@ -1,0 +1,47 @@
+{
+  "scene": "A doorway and blind corner create uncertain space near the intended corridor line.",
+  "objects": [
+    {
+      "type": "doorway",
+      "image_position": "center",
+      "path_relation": "near_planned_path",
+      "distance_estimate": "medium",
+      "motion_state": "unknown",
+      "facing_direction": "unknown",
+      "social_radius": 10,
+      "semantic_cost": 125,
+      "reason": "Doorways can introduce crossing traffic into the path."
+    },
+    {
+      "type": "blind_corner",
+      "image_position": "center-right",
+      "path_relation": "near_planned_path",
+      "distance_estimate": "medium",
+      "motion_state": "unknown",
+      "facing_direction": "unknown",
+      "social_radius": 13,
+      "semantic_cost": 170,
+      "reason": "Limited visibility makes the right corner uncertain."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward-right",
+    "lidar_summary": "Front-left is occupied and right side has an unknown gap.",
+    "depth_summary": "Doorway and blind-corner cues appear ahead."
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center",
+      "radius": 12,
+      "cost": 125
+    },
+    {
+      "shape": "circle",
+      "center": "center-right",
+      "radius": 18,
+      "cost": 170
+    }
+  ],
+  "navigation_advice": "Bias the final path away from low-visibility doorway and corner regions."
+}
