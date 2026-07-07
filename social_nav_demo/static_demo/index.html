@@ -19,7 +19,7 @@
               --amber: #facc15;
             }
             * { box-sizing: border-box; }
-            html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
+            html { scroll-behavior: smooth; }
             body {
               margin: 0;
               background: linear-gradient(180deg, #08111f 0%, var(--bg) 44%, #050812 100%);
@@ -34,7 +34,6 @@
               align-items: center;
               padding: 34px 0 28px;
               border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-              scroll-snap-align: start;
             }
             .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.72fr); gap: 28px; align-items: center; }
             .eyebrow { color: var(--green); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.78rem; font-weight: 700; }
@@ -105,7 +104,6 @@
               border: 1px solid rgba(148, 163, 184, 0.22);
               border-radius: 8px;
               background: rgba(8, 13, 24, 0.72);
-              scroll-snap-align: start;
               scroll-margin-top: 76px;
             }
             .demo-heading { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
@@ -2459,9 +2457,208 @@
                 const frame = button.dataset.frameButton;
                 const target = button.dataset.trialTarget;
                 document.querySelectorAll(`[data-frame-button="${frame}"]`).forEach((item) => item.classList.toggle('active', item === button));
-                document.querySelectorAll(`[data-frame-panel="${frame}"]`).forEach((panel) => panel.classList.toggle('active', panel.dataset.trialPanel === target));
+                document.querySelectorAll(`[data-frame-panel="${frame}"]`).forEach((panel) => {
+                  const becoming = panel.dataset.trialPanel === target;
+                  panel.classList.toggle('active', becoming);
+                  if (becoming) triggerAnimation(panel);
+                });
               });
             });
+          </script>
+          <script src="assets/path_data.js"></script>
+          <script>
+          // ── Path animation overlay ──────────────────────────────────────────
+          // For each map-panel img, overlay a transparent canvas.
+          // On show: draw static baseline path, then animate enhanced path + robot.
+
+          const _anims = new Map(); // canvas → animation state
+
+          function getContainBounds(canvas) {
+            // PNG is 100×100; canvas covers the img element (object-fit:contain).
+            const cw = canvas.clientWidth, ch = canvas.clientHeight;
+            const scale = Math.min(cw / 100, ch / 100);
+            const rw = 100 * scale, rh = 100 * scale;
+            return {ox:(cw-rw)/2, oy:(ch-rh)/2, scale};
+          }
+
+          function ptToCanvas(p, b) {
+            return [b.ox + p[0] * b.scale, b.oy + p[1] * b.scale];
+          }
+
+          function drawBaseline(ctx, path, b) {
+            if (!path || path.length < 2) return;
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(56,189,248,0.65)';
+            ctx.lineWidth = Math.max(1, b.scale * 0.9);
+            ctx.setLineDash([b.scale * 1.5, b.scale]);
+            const [x0,y0] = ptToCanvas(path[0], b);
+            ctx.moveTo(x0, y0);
+            for (let i = 1; i < path.length; i++) {
+              const [x,y] = ptToCanvas(path[i], b);
+              ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          function drawEnhancedPartial(ctx, path, frac, b) {
+            if (!path || path.length < 2) return;
+            const n = Math.max(2, Math.ceil(path.length * frac));
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(168,85,247,0.95)';
+            ctx.lineWidth = Math.max(1.5, b.scale * 1.2);
+            ctx.setLineDash([]);
+            const [x0,y0] = ptToCanvas(path[0], b);
+            ctx.moveTo(x0, y0);
+            for (let i = 1; i < n; i++) {
+              const [x,y] = ptToCanvas(path[i], b);
+              ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+
+          function drawRobot(ctx, path, t, b) {
+            if (!path || path.length < 2 || t <= 0) return;
+            const raw = (path.length - 1) * t;
+            const idx = Math.min(Math.floor(raw), path.length - 2);
+            const frac = raw - idx;
+            const p1 = path[idx], p2 = path[idx + 1];
+            const rx = p1[0] + (p2[0] - p1[0]) * frac;
+            const ry = p1[1] + (p2[1] - p1[1]) * frac;
+            const [cx, cy] = [b.ox + rx * b.scale, b.oy + ry * b.scale];
+
+            // Glow
+            const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,b.scale*2);
+            grad.addColorStop(0, 'rgba(103,232,249,0.45)');
+            grad.addColorStop(1, 'rgba(103,232,249,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, b.scale * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Triangle heading
+            const angle = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) + Math.PI / 2;
+            const sz = Math.max(2.5, b.scale * 1.4);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+            ctx.fillStyle = '#67e8f9';
+            ctx.beginPath();
+            ctx.moveTo(0, -sz);
+            ctx.lineTo(-sz * 0.6, sz * 0.7);
+            ctx.lineTo(sz * 0.6, sz * 0.7);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+
+          function drawMarkers(ctx, start, goal, b) {
+            // Start dot
+            const [sx,sy] = ptToCanvas(start, b);
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath(); ctx.arc(sx, sy, Math.max(2, b.scale * 0.8), 0, Math.PI*2); ctx.fill();
+            // Goal star text
+            const [gx,gy] = ptToCanvas(goal, b);
+            ctx.fillStyle = '#facc15';
+            ctx.font = `bold ${Math.max(8, b.scale * 0.9)}px sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('★', gx, gy);
+          }
+
+          // Timing constants (ms)
+          const T_BASELINE_END  =  600;  // baseline drawn instantly at start
+          const T_ENH_START     =  800;
+          const T_ENH_END       = 3200;
+          const T_ROBOT_START   = 3400;
+          const T_ROBOT_END     = 9000;
+
+          function animFrame(canvas, pd, startTs, ts) {
+            const elapsed = ts - startTs;
+            const b = getContainBounds(canvas);
+
+            canvas.width  = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawMarkers(ctx, pd.start, pd.goal, b);
+
+            // Robot — follows enhanced path
+            if (elapsed > T_ROBOT_START) {
+              const t = Math.min(1, (elapsed - T_ROBOT_START) / (T_ROBOT_END - T_ROBOT_START));
+              drawRobot(ctx, pd.enhanced, t, b);
+            }
+
+            if (elapsed < T_ROBOT_END + 1000) {
+              const raf = requestAnimationFrame((ts2) => animFrame(canvas, pd, startTs, ts2));
+              _anims.set(canvas, raf);
+            }
+          }
+
+          function startAnimation(canvas, trialPanelId) {
+            // Cancel any running animation on this canvas
+            if (_anims.has(canvas)) {
+              cancelAnimationFrame(_anims.get(canvas));
+              _anims.delete(canvas);
+            }
+            const pd = (window.PATH_DATA || {})[trialPanelId];
+            if (!pd) return;
+            requestAnimationFrame((ts) => animFrame(canvas, pd, ts, ts));
+          }
+
+          function getCanvasForPanel(trialViewEl) {
+            const mapPanel = trialViewEl.querySelector('.map-panel');
+            if (!mapPanel) return null;
+            let canvas = mapPanel.querySelector('canvas.path-overlay');
+            if (!canvas) {
+              const img = mapPanel.querySelector('img');
+              if (!img) return null;
+              // Wrap img if not already wrapped
+              if (!img.parentElement.classList.contains('map-img-wrap')) {
+                const wrap = document.createElement('div');
+                wrap.className = 'map-img-wrap';
+                wrap.style.cssText = 'position:relative;width:100%;height:calc(100% - 32px);';
+                img.parentNode.insertBefore(wrap, img);
+                // Move the img inside the wrap (it was height:calc(100%-32px) itself)
+                img.style.height = '100%';
+                wrap.appendChild(img);
+              }
+              canvas = document.createElement('canvas');
+              canvas.className = 'path-overlay';
+              canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+              img.parentElement.appendChild(canvas);
+            }
+            return canvas;
+          }
+
+          function triggerAnimation(trialViewEl) {
+            const panelId = trialViewEl.dataset.trialPanel;
+            if (!panelId) return;
+            const canvas = getCanvasForPanel(trialViewEl);
+            if (canvas) startAnimation(canvas, panelId);
+          }
+
+          // Auto-start for initially active panels when they scroll into view
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const panel = entry.target.querySelector('.trial-view.active');
+                if (panel) triggerAnimation(panel);
+              }
+            });
+          }, {threshold: 0.2});
+
+          document.querySelectorAll('.demo-screen').forEach(sec => observer.observe(sec));
+
+          // Also trigger for panels already in view on load
+          window.addEventListener('load', () => {
+            document.querySelectorAll('.trial-view.active').forEach(panel => {
+              const rect = panel.getBoundingClientRect();
+              if (rect.top < window.innerHeight && rect.bottom > 0) {
+                triggerAnimation(panel);
+              }
+            });
+          });
           </script>
         </body>
         </html>
