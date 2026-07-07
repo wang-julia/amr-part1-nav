@@ -13,7 +13,7 @@ Return only valid JSON using this schema:
   "scene": "short scene description",
   "objects": [
     {
-      "type": "person | group | parked_bike | cart | doorway | turning_point | blind_corner | obstacle",
+      "type": "person | group | parked_bike | cart | turning_point | blind_corner | obstacle",
       "image_position": "top-left | top-center | top-right | center-left | center | center-right | bottom-left | bottom-center | bottom-right",
       "path_relation": "on_planned_path | near_planned_path | away_from_path",
       "distance_estimate": "near | medium | far",
@@ -50,6 +50,12 @@ Hard constraints:
 - Do not output directional_ellipse, wall_aligned_band, rectangle, polygon, line, or any non-circular cost shape.
 - Never use 255 for semantic cost. Hard obstacles are handled by the map, not by the VLM.
 - Ground every object in visible image evidence and the provided navigation context.
+- Only include objects that create semantic navigation risk. Do not add cost for ordinary closed side doors, open doorways, wall signs, ceiling lights, or normal corridor background.
+- Do not output type "doorway". Doorways are not part of this demo's semantic cost layer.
+- local_costmap_intent must have one circle for each cost-producing object or visible person. The circle center must match that object's image_position exactly.
+- image_position must be one of the exact nine schema values. Never output "left", "right", "top", "bottom", "middle", or any other value.
+- Before listing a person, verify that a human body is actually visible in the image. If no human is visible, do not output a person.
+- Detect a crowd/group when two or more people are visible close together. Use "group" in the scene text, and represent the visible people with separate small person circles unless individuals cannot be separated.
 
 Motion policy:
 - Do not infer or predict walking from navigation context alone.
@@ -57,34 +63,54 @@ Motion policy:
 - If the image does not clearly show walking, use stationary or unknown.
 - A person facing the camera with both feet planted, balanced posture, and no visible stride is stationary.
 - A person standing upright in the corridor center with arms relaxed and no gait cue is stationary, even if they are on or near the planned path.
+- A frontal full-body person with both shoes visible, feet side-by-side, shoulders square to the camera, and arms relaxed is stationary. Do not label this as walking.
+- If the context/depth summary names a "standing_person", use that as supporting evidence for stationary unless the image clearly contradicts it with a stride.
+- A person leaning or standing near a wall is stationary unless a clear stride/gait cue is visible.
+- A group of people standing along a wall is stationary unless individual people show clear walking gait cues.
+- A crowd or group standing along a wall is stationary/possibly_moving; do not label the crowd as walking unless multiple people clearly show gait cues.
 - Trust the visual evidence. Do not force a person into walking just because they are ahead of the robot, on the planned path, or facing away.
 - Use mobility_class moving only when motion_state is walking.
-- Use mobility_class possibly_moving for stationary people, standing groups, turning points, doorways, and blind corners.
+- Use mobility_class possibly_moving for every visible stationary person, standing group, turning point, and blind corner.
+- Do not use mobility_class static for people. People are either moving when clearly walking, or possibly_moving when stationary/unknown.
 - Use mobility_class static for fixed or parked objects such as parked bikes, carts, and fixed obstacles.
 - facing_direction should be unknown unless walking direction is visually clear.
 
 Placement and distance policy:
 - image_position should describe the object's center relative to the photo: left/center/right and top/center/bottom.
 - Use the center of the visible object in the camera image, not the center of the whole scene.
+- The camera photo faces the same direction the robot is moving. The horizontal centerline of the photo is the robot's forward direction.
+- If an object's center is in the left 50% of the photo width, use a left image_position: top-left, center-left, or bottom-left.
+- If an object's center is in the right 50% of the photo width, use a right image_position: top-right, center-right, or bottom-right.
+- Use center positions only when the object's center is close to the photo's horizontal midpoint.
+- If a person overlaps the midpoint but their torso/feet center is slightly left of the midpoint, choose center-left. If slightly right, choose center-right.
+- Left/right in the photo must map directly to left/right in the local semantic costmap.
 - Estimate distance primarily from the apparent size of the object in the photo, supported by floor contact, occlusion, vertical image position, and depth/LiDAR context.
 - Larger objects with low floor contact are usually nearer. Smaller objects higher in the image are usually farther.
 - Copy each object's distance_estimate into its matching local_costmap_intent item.
 - If multiple people in a group are visible at different positions, create multiple circular costmap entries rather than one large shape.
+- For wall-side people, keep each circle on the visible wall side. Do not spread group circles across the hallway center unless people are actually standing there.
+- For a wall-side crowd, all person circles must stay on that same wall side. Do not place any crowd circle at center-left or center if the people are visually along the right wall.
+- For frame-like scenes where the people are all standing along the photo's right wall, use center-right for near people and top-right for farther people.
+- If one feature is visibly closer than another, assign the closer feature "near" and the farther feature "medium" or "far"; do not merge their distances.
+- Turning points and blind corners should be placed at the visible uncertainty location, not on a farther person behind that location.
+- In these hallway photos, a person on the photo's right wall should be center-right or top-right, not center or center-left.
+- In these hallway photos, a person on the photo's left side should be center-left or bottom-left, not center.
 
 Circle cost policy:
 - Every object should become one or more circular costs.
 - A single standing person should use one localized circle.
 - A walking person should still use a circle only; do not add a directional projection.
 - A group should be represented as several circles when individual people are visible. If individuals cannot be separated, use two or three overlapping circles on the visible group footprint.
-- A wall-side group should place its circles along the wall side, leaving open hallway space if the image shows it.
-- Turning points, doorways, and blind corners should use compact circular caution zones at the visible uncertainty location.
+- A wall-side group or crowd should place its circles along the wall side, leaving open hallway space if the image shows it.
+- Turning points and blind corners should use compact circular caution zones at the visible uncertainty location.
+- If the corridor is clear and no person, moving object, turning point, blind corner, cart, bike, or obstacle affects the planned route, return an empty objects list and an empty local_costmap_intent list.
 
 Suggested circle parameters:
-- Standing person: radius 6-8, cost 130-180.
-- Walking person: radius 7-9, cost 150-200.
-- Group person-circle: radius 6-8 per visible person, cost 130-180.
-- Static object: radius 5-8, cost 80-140.
-- Turning point, doorway, or blind corner: radius 5-8, cost 90-150.
+- Single standing person: radius 3-4, cost 130-180.
+- Single walking person: radius 4, cost 150-200.
+- Group person-circle: radius 3-4 per visible person, cost 130-180.
+- Static object: radius 4-6, cost 80-140.
+- Turning point or blind corner: radius 5-8, cost 90-150.
 
 Path relation policy:
 - on_planned_path: object occupies the route centerline or strongly overlaps the route.

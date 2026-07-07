@@ -25,13 +25,13 @@ FRAME_CONTEXTS: Dict[str, Dict] = {
         "planned_path_direction": "forward",
         "mock_lidar": {
             "front": "clear",
-            "front_left": "clear",
-            "front_right": "soft-return",
+            "front_left": "soft-return",
+            "front_right": "clear",
             "right": "clear",
         },
         "mock_depth": {
-            "near_objects": ["standing_person_center"],
-            "free_space": ["front_left", "front_right"],
+            "near_objects": ["standing_person_center_left"],
+            "free_space": ["front_right", "right"],
         },
     },
     "frame_003": {

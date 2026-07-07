@@ -78,17 +78,17 @@
         "planned_path_direction": "forward",
         "mock_lidar": {
           "front": "clear",
-          "front_left": "clear",
-          "front_right": "soft-return",
+          "front_left": "soft-return",
+          "front_right": "clear",
           "right": "clear"
         },
         "mock_depth": {
           "near_objects": [
-            "standing_person_center"
+            "standing_person_center_left"
           ],
           "free_space": [
-            "front_left",
-            "front_right"
+            "front_right",
+            "right"
           ]
         }
       }

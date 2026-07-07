@@ -23,6 +23,7 @@
     {
       "shape": "circle",
       "center": "center-left",
+      "distance_estimate": "near",
       "radius": 4,
       "mobility_class": "possibly_moving",
       "cost": 165

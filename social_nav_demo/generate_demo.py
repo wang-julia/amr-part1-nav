@@ -931,6 +931,12 @@ def build_html_v2(frame_sections: list[dict], vlm_mode: str) -> str:
             .overview-panel h2 {{ font-size: 1.1rem; margin-bottom: 10px; color: #dbeafe; }}
             .overview-list {{ display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }}
             .overview-list li {{ padding: 10px 12px; background: rgba(18, 29, 49, 0.72); border: 1px solid rgba(148, 163, 184, 0.16); border-radius: 8px; color: #d7e2f0; }}
+            .metric-guide {{ margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(148, 163, 184, 0.22); }}
+            .metric-guide h3 {{ margin: 0 0 8px; color: #dbeafe; font-size: 0.96rem; }}
+            .metric-guide dl {{ display: grid; gap: 8px; margin: 0; }}
+            .metric-guide div {{ padding: 9px 10px; background: rgba(18, 29, 49, 0.58); border: 1px solid rgba(148, 163, 184, 0.14); border-radius: 8px; }}
+            .metric-guide dt {{ color: var(--green); font-size: 0.78rem; font-weight: 800; }}
+            .metric-guide dd {{ margin: 2px 0 0; color: #d7e2f0; font-size: 0.86rem; font-weight: 500; }}
             .demo-nav {{
               position: sticky;
               top: 0;
@@ -1075,10 +1081,31 @@ def build_html_v2(frame_sections: list[dict], vlm_mode: str) -> str:
                   <ul class="overview-list">
                     <li>Semantic JSON becomes a 40x40 robot-local costmap.</li>
                     <li>Objects are classified as static, possibly moving, or moving before costs are shaped.</li>
-                    <li>Static objects get compact clearance; moving people can add directional prediction.</li>
-                    <li>Wall-side groups use a narrow band so the corridor remains passable.</li>
+                    <li>Every semantic cost is rendered as one or more compact circles.</li>
+                    <li>Wall-side groups stay as several wall-side circles so the corridor remains passable.</li>
                     <li>A* visualizes baseline versus VLM-enhanced paths for five robot-photo moments along the T-junction.</li>
                   </ul>
+                  <div class="metric-guide">
+                    <h3>How The Metrics Are Calculated</h3>
+                    <dl>
+                      <div>
+                        <dt>Path length</dt>
+                        <dd>Total grid-distance from robot/start to goal. Straight steps count about 1; diagonal steps count about 1.4.</dd>
+                      </div>
+                      <div>
+                        <dt>Average cost</dt>
+                        <dd>Mean cost sampled along the selected path. Baseline uses map and wall-padding costs; VLM-enhanced also includes semantic costs.</dd>
+                      </div>
+                      <div>
+                        <dt>Social violations</dt>
+                        <dd>Number of path cells that cross high semantic-cost regions such as person or caution circles.</dd>
+                      </div>
+                      <div>
+                        <dt>Risk score</dt>
+                        <dd>A 0-100 summary of semantic risk from path cost exposure and social violations. Lower is safer.</dd>
+                      </div>
+                    </dl>
+                  </div>
                 </aside>
               </div>
             </section>

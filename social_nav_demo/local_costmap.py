@@ -27,16 +27,24 @@ def create_local_costmap(size: int = LOCAL_SIZE) -> np.ndarray:
 
 def image_position_to_local_grid(position: str) -> GridPoint:
     """Map coarse VLM image positions to cells in a 40x40 robot-local grid."""
+    aliases = {
+        "left": "center-left",
+        "right": "center-right",
+        "middle": "center",
+        "bottom": "bottom-center",
+        "top": "top-center",
+    }
+    position = aliases.get(position, position)
     mapping = {
-        "top-left": (15, 7),
+        "top-left": (13, 7),
         "top-center": (20, 7),
-        "top-right": (25, 7),
-        "center-left": (16, 20),
+        "top-right": (27, 7),
+        "center-left": (14, 20),
         "center": (20, 20),
-        "center-right": (24, 20),
-        "bottom-left": (16, 32),
+        "center-right": (26, 20),
+        "bottom-left": (14, 32),
         "bottom-center": (20, 32),
-        "bottom-right": (24, 32),
+        "bottom-right": (26, 32),
     }
     return mapping.get(position, mapping["center"])
 
@@ -94,7 +102,7 @@ def semantic_json_to_local_costmap(
         mobility_class = item.get("mobility_class", "static")
         cost = int(item.get("cost", 160))
 
-        radius = int(item.get("radius", 10))
+        radius = int(item.get("radius", 4))
         radius += MOBILITY_RADIUS_BONUS.get(mobility_class, 0)
         cost += MOBILITY_COST_BONUS.get(mobility_class, 0)
         costmap = add_circular_semantic_cost(costmap, center, radius, cost)
