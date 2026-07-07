@@ -20,22 +20,25 @@ sys.path.insert(0, str(ROOT))
 import matplotlib
 matplotlib.use("Agg")
 
-from generate_demo import draw_local_costmap, draw_synthetic_camera_frame
 from mock_context import get_mock_context, get_timeline
 from simulator import build_demo_result
-from vlm_inference import load_replay_output
 
 OUT = ROOT / "live_demo.html"
+CAMERA_DIR = ROOT / "camera_photos"
+TRIAL_DIR  = ROOT / "trial_outputs" / "trial_03"
 
+# Extensions for real camera photos (frame_005 is .png, rest are .jpg)
+_EXTS = {"frame_005": ".png"}
 
-def _render_b64(draw_fn, *args) -> str:
-    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as fh:
-        tmp = Path(fh.name)
-    try:
-        draw_fn(*args, tmp)
-        return base64.b64encode(tmp.read_bytes()).decode()
-    finally:
-        tmp.unlink(missing_ok=True)
+def _photo_b64(fid: str) -> str:
+    ext = _EXTS.get(fid, ".jpg")
+    path = CAMERA_DIR / f"{fid}{ext}"
+    return base64.b64encode(path.read_bytes()).decode()
+
+def _load_trial(fid: str) -> dict:
+    path = TRIAL_DIR / f"{fid}.json"
+    with path.open(encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def collect_frames() -> list:
@@ -43,15 +46,14 @@ def collect_frames() -> list:
     for item in get_timeline():
         fid = item["frame_id"]
         ctx = get_mock_context(fid)
-        sem = load_replay_output(fid)
+        sem = _load_trial(fid)
         res = build_demo_result(sem, ctx)
         label = item["title"].split(" - ", 1)[1].title() if " - " in item["title"] else item["title"]
         frames.append({
             "frame_id": fid,
             "title": label,
             "summary": item["summary"],
-            "camera_b64": _render_b64(draw_synthetic_camera_frame, fid, sem),
-            "local_b64": _render_b64(draw_local_costmap, res["local_costmap"]),
+            "camera_b64": _photo_b64(fid),
             "local_costmap": res["local_costmap"].astype(int).tolist(),
             "enhanced_costmap": res["enhanced_costmap"].astype(int).tolist(),
             "base_costmap": res["base_costmap"].astype(int).tolist(),
@@ -127,7 +129,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text);
   flex-shrink: 0; white-space: nowrap; }
 .dir-side.lft { transform: rotate(180deg); }
 #localCanvas { flex: 1; min-width: 0; aspect-ratio: 1; display: block;
-  image-rendering: pixelated; border-radius: 4px; }
+  border-radius: 4px; }
 .robot-label { font-size: 0.7rem; color: var(--muted); text-align: center; flex-shrink: 0; }
 
 /* Right column: global costmap + metrics */
@@ -314,25 +316,28 @@ function renderLocal(frame, frac) {
   const canvas = document.getElementById("localCanvas");
   const data = frame.local_costmap;
   const H = data.length, W = data[0].length;
-  canvas.width = W; canvas.height = H;
+  const S = 10; // render each cell as SxS pixels for crisp text
+  canvas.width = W * S; canvas.height = H * S;
   const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(W, H);
   const total = H * W;
   const revealed = Math.floor(total * frac);
-  for (let i = 0; i < total; i++) {
-    const r = Math.floor(i / W), c = i % W;
-    const rgb = i > revealed ? [7,11,20] : magmaRgb(data[r][c], 245);
-    const p = i * 4;
-    img.data[p] = rgb[0]; img.data[p+1] = rgb[1]; img.data[p+2] = rgb[2]; img.data[p+3] = 255;
+  let i = 0;
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      const rgb = i > revealed ? [7,11,20] : magmaRgb(data[r][c], 245);
+      ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      ctx.fillRect(c * S, r * S, S, S);
+      i++;
+    }
   }
-  ctx.putImageData(img, 0, 0);
+  // robot triangle at local position (20, 36), scaled
   if (frac > 0.85) {
     ctx.fillStyle = "#67e8f9";
     ctx.beginPath();
-    ctx.moveTo(20, 32); ctx.lineTo(17, 37); ctx.lineTo(23, 37);
+    ctx.moveTo(20*S, 32*S); ctx.lineTo(17*S, 37*S); ctx.lineTo(23*S, 37*S);
     ctx.closePath(); ctx.fill();
   }
-  // C: ring + object type label so audience knows what each blob represents
+  // C: ring + readable object type label
   if (frac > 0.6 && frame.local_costmap_intent && frame.local_costmap_intent.length > 0) {
     const ringT = Math.min(1, (frac - 0.6) / 0.4);
     const posMap = {
@@ -340,26 +345,24 @@ function renderLocal(frame, frac) {
       "center-left":[10,20],"center":[20,20],"center-right":[30,20],
       "bottom-left":[10,32],"bottom-center":[20,32],"bottom-right":[30,32]
     };
-    // map image_position → object type for labelling
     const typeAt = {};
     (frame.objects || []).forEach(o => { typeAt[o.image_position] = o.type; });
 
     frame.local_costmap_intent.forEach(item => {
       const pos = posMap[item.center];
       if (!pos) return;
-      const r = Math.min((item.radius || 10), 17);
-      // ring outline
+      const cx = pos[0] * S, cy = pos[1] * S;
+      const r = Math.min((item.radius || 10), 17) * S;
       ctx.beginPath();
-      ctx.arc(pos[0], pos[1], r, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(248,113,113,${0.9 * ringT})`;
-      ctx.lineWidth = 0.8;
+      ctx.lineWidth = 4;
       ctx.stroke();
-      // object type label just above the ring
       const label = typeAt[item.center] || item.shape;
-      ctx.font = "3px sans-serif";
+      ctx.font = `bold 14px Inter, sans-serif`;
       ctx.fillStyle = `rgba(255,255,255,${ringT})`;
       ctx.textAlign = "center";
-      ctx.fillText(label, pos[0], pos[1] - r - 1);
+      ctx.fillText(label, cx, cy - r - 6);
     });
   }
 }
