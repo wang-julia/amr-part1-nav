@@ -1,30 +1,53 @@
 {
-  "scene": "A small group is partially blocking the shared office corridor.",
+  "scene": "A turning point and a standing person create uncertainty near the T-junction.",
   "objects": [
     {
-      "type": "group",
-      "image_position": "center",
-      "path_relation": "on_planned_path",
+      "type": "turning_point",
+      "image_position": "center-left",
+      "path_relation": "near_planned_path",
       "distance_estimate": "near",
-      "motion_state": "stationary",
+      "motion_state": "unknown",
+      "mobility_class": "possibly_moving",
       "facing_direction": "unknown",
-      "social_radius": 20,
-      "semantic_cost": 240,
-      "reason": "Avoid cutting through a group and preserve a respectful passing distance."
+      "social_radius": 6,
+      "semantic_cost": 135,
+      "reason": "The turning point can hide crossing traffic before the robot commits to the turn."
+    },
+    {
+      "type": "person",
+      "image_position": "center-right",
+      "path_relation": "near_planned_path",
+      "distance_estimate": "medium",
+      "motion_state": "stationary",
+      "mobility_class": "possibly_moving",
+      "facing_direction": "unknown",
+      "social_radius": 6,
+      "semantic_cost": 170,
+      "reason": "The person is standing beyond the turning point and could step into the shared space."
     }
   ],
   "navigation_context_used": {
-    "planned_path_direction": "forward-right",
-    "lidar_summary": "Front has a soft return, front-left is occupied, and right is clearer.",
-    "depth_summary": "Group detected in the central near field; free space remains to the right."
+    "planned_path_direction": "forward",
+    "lidar_summary": "Front-left has uncertainty at the turning point and front-right has a person-sized soft return.",
+    "depth_summary": "The turning point is closer to the robot, while the standing person is deeper beyond the corner."
   },
   "local_costmap_intent": [
     {
       "shape": "circle",
-      "center": "center",
-      "radius": 20,
-      "cost": 240
+      "center": "center-left",
+      "distance_estimate": "near",
+      "radius": 6,
+      "mobility_class": "possibly_moving",
+      "cost": 135
+    },
+    {
+      "shape": "circle",
+      "center": "center-right",
+      "distance_estimate": "medium",
+      "radius": 6,
+      "mobility_class": "possibly_moving",
+      "cost": 170
     }
   ],
-  "navigation_advice": "A slightly longer route around the group is lower risk than the shortest path."
+  "navigation_advice": "Give extra clearance to the turning point and nearby person while entering the junction."
 }

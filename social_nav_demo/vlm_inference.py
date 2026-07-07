@@ -7,7 +7,7 @@ from typing import Dict, Tuple
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "vlm_outputs"
 DEFAULT_QWEN_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct"
 
-_QWEN_CACHE: Dict[Tuple[str, str], Tuple[object, object, object]] = {}
+_QWEN_CACHE: Dict[Tuple[str, str, int, int, bool], Tuple[object, object, object]] = {}
 
 
 def load_replay_output(
@@ -37,9 +37,15 @@ def _extract_json_object(text: str) -> Dict:
         return json.loads(cleaned[start : end + 1])
 
 
-def _load_qwen_model(model_id: str, device_map: str = "auto") -> Tuple[object, object, object]:
+def _load_qwen_model(
+    model_id: str,
+    device_map: str = "auto",
+    min_pixels: int = 128 * 28 * 28,
+    max_pixels: int = 512 * 28 * 28,
+    local_files_only: bool = False,
+) -> Tuple[object, object, object]:
     """Lazy-load Qwen2.5-VL so replay mode stays lightweight."""
-    cache_key = (model_id, device_map)
+    cache_key = (model_id, device_map, min_pixels, max_pixels, local_files_only)
     if cache_key in _QWEN_CACHE:
         return _QWEN_CACHE[cache_key]
 
@@ -58,8 +64,14 @@ def _load_qwen_model(model_id: str, device_map: str = "auto") -> Tuple[object, o
         model_id,
         torch_dtype=dtype,
         device_map=device_map,
+        local_files_only=local_files_only,
     )
-    processor = AutoProcessor.from_pretrained(model_id)
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        min_pixels=min_pixels,
+        max_pixels=max_pixels,
+        local_files_only=local_files_only,
+    )
     _QWEN_CACHE[cache_key] = (model, processor, process_vision_info)
     return _QWEN_CACHE[cache_key]
 
@@ -71,12 +83,21 @@ def run_qwen_vl_inference(
     model_id: str = DEFAULT_QWEN_MODEL,
     max_new_tokens: int = 700,
     device_map: str = "auto",
+    min_pixels: int = 128 * 28 * 28,
+    max_pixels: int = 512 * 28 * 28,
+    local_files_only: bool = False,
 ) -> Dict:
     """Run local Qwen2.5-VL and return parsed semantic-costmap JSON."""
     if not image_path.exists():
         raise FileNotFoundError(f"Qwen image not found: {image_path}")
 
-    model, processor, process_vision_info = _load_qwen_model(model_id, device_map)
+    model, processor, process_vision_info = _load_qwen_model(
+        model_id,
+        device_map,
+        min_pixels,
+        max_pixels,
+        local_files_only,
+    )
     qwen_prompt = (
         f"{prompt.strip()}\n\n"
         "Mock navigation context:\n"
@@ -134,10 +155,20 @@ def infer_semantic_json(
     model_id: str = DEFAULT_QWEN_MODEL,
     fallback_to_replay: bool = True,
     save_output_dir: Path | None = None,
+    qwen_device_map: str = "auto",
+    qwen_max_new_tokens: int = 700,
+    qwen_min_pixels: int = 128 * 28 * 28,
+    qwen_max_pixels: int = 512 * 28 * 28,
+    qwen_local_files_only: bool = False,
+    use_saved_qwen: bool = False,
 ) -> Dict:
     if mode == "replay":
         return load_replay_output(frame_id)
     if mode == "qwen":
+        if use_saved_qwen and save_output_dir is not None:
+            saved_path = save_output_dir / f"{frame_id}.json"
+            if saved_path.exists():
+                return load_replay_output(frame_id, save_output_dir)
         if image_path is None or context is None:
             raise ValueError("image_path and context are required for qwen mode.")
         try:
@@ -146,6 +177,11 @@ def infer_semantic_json(
                 prompt=prompt,
                 context=context,
                 model_id=model_id,
+                max_new_tokens=qwen_max_new_tokens,
+                device_map=qwen_device_map,
+                min_pixels=qwen_min_pixels,
+                max_pixels=qwen_max_pixels,
+                local_files_only=qwen_local_files_only,
             )
         except Exception as exc:
             if not fallback_to_replay:

@@ -1,36 +1,36 @@
 {
-  "name": "Office hallway navigation",
-  "description": "A four-frame mocked camera and navigation-context sequence for local VLM semantic costmap fusion.",
+  "name": "T-junction robot photo navigation",
+  "description": "A five-photo robot camera and navigation-context sequence for local VLM semantic costmap fusion.",
   "timeline": [
     {
       "frame_id": "frame_001",
       "title": "Frame 1 - clear hallway",
-      "summary": "Baseline and enhanced paths are nearly identical because no social risk is visible.",
+      "summary": "The robot sees a clear corridor stem, so the semantic layer adds no extra local cost.",
       "context": {
         "robot_pose": {
-          "x": 18,
-          "y": 82,
-          "heading": "north-east"
+          "x": 52,
+          "y": 84,
+          "heading": "north"
         },
         "local_waypoints": [
           [
-            20,
-            78
+            52,
+            80
           ],
           [
-            28,
-            70
+            52,
+            68
           ],
           [
-            36,
-            62
+            52,
+            56
           ],
           [
-            45,
-            52
+            52,
+            44
           ]
         ],
-        "planned_path_direction": "forward-right",
+        "planned_path_direction": "forward",
         "mock_lidar": {
           "front": "clear",
           "front_left": "clear",
@@ -41,41 +41,41 @@
           "near_objects": [],
           "free_space": [
             "front",
-            "front_right",
-            "front_left"
+            "front_left",
+            "front_right"
           ]
         }
       }
     },
     {
       "frame_id": "frame_002",
-      "title": "Frame 2 - walking person near planned path",
-      "summary": "The replayed VLM JSON adds personal-space cost and extends it in the person's facing direction.",
+      "title": "Frame 2 - standing person",
+      "summary": "A standing person is possibly moving, so the demo adds a cautious circular personal-space zone.",
       "context": {
         "robot_pose": {
-          "x": 28,
-          "y": 70,
-          "heading": "north-east"
+          "x": 52,
+          "y": 66,
+          "heading": "north"
         },
         "local_waypoints": [
           [
-            30,
-            67
+            52,
+            62
           ],
           [
-            38,
-            59
+            52,
+            52
           ],
           [
-            47,
-            50
-          ],
-          [
-            56,
+            52,
             42
+          ],
+          [
+            52,
+            30
           ]
         ],
-        "planned_path_direction": "forward-right",
+        "planned_path_direction": "forward",
         "mock_lidar": {
           "front": "clear",
           "front_left": "clear",
@@ -84,104 +84,160 @@
         },
         "mock_depth": {
           "near_objects": [
-            "walking_person_center_right"
+            "standing_person_center"
           ],
           "free_space": [
             "front_left",
-            "far_left"
+            "front_right"
           ]
         }
       }
     },
     {
       "frame_id": "frame_003",
-      "title": "Frame 3 - doorway and blind corner",
-      "summary": "Medium semantic caution zones bias the route away from uncertain space.",
+      "title": "Frame 3 - moving person",
+      "summary": "A moving person adds current personal-space cost plus a directional predicted-motion zone.",
       "context": {
         "robot_pose": {
-          "x": 42,
-          "y": 58,
-          "heading": "north-east"
+          "x": 52,
+          "y": 54,
+          "heading": "north"
         },
         "local_waypoints": [
           [
-            44,
-            55
+            52,
+            48
           ],
           [
             52,
-            47
+            40
           ],
           [
-            60,
-            39
+            48,
+            30
           ],
           [
-            68,
-            31
+            40,
+            23
           ]
         ],
-        "planned_path_direction": "forward-right",
+        "planned_path_direction": "forward-left",
         "mock_lidar": {
           "front": "clear",
-          "front_left": "occupied",
+          "front_left": "soft-return",
           "front_right": "clear",
-          "right": "unknown-gap"
+          "right": "clear"
         },
         "mock_depth": {
           "near_objects": [
-            "doorway_center_left",
-            "blind_corner_top_right"
+            "moving_person_center_left"
           ],
           "free_space": [
-            "front_right",
-            "center"
+            "front",
+            "front_right"
           ]
         }
       }
     },
     {
       "frame_id": "frame_004",
-      "title": "Frame 4 - group partially blocks corridor",
-      "summary": "A larger social zone makes the enhanced path longer but lower risk.",
+      "title": "Frame 4 - turning point and person",
+      "summary": "A turning point and nearby person create caution zones near the T-junction.",
       "context": {
         "robot_pose": {
-          "x": 55,
-          "y": 46,
-          "heading": "north-east"
+          "x": 52,
+          "y": 34,
+          "heading": "north-west"
         },
         "local_waypoints": [
           [
-            58,
-            43
+            52,
+            30
           ],
           [
-            65,
-            36
+            48,
+            25
           ],
           [
-            73,
-            28
+            40,
+            23
           ],
           [
-            82,
-            20
+            30,
+            23
           ]
         ],
-        "planned_path_direction": "forward-right",
+        "planned_path_direction": "forward",
         "mock_lidar": {
-          "front": "soft-return",
-          "front_left": "occupied",
-          "front_right": "partially-clear",
-          "right": "clear"
+          "front": "clear",
+          "front_left": "unknown-gap",
+          "front_right": "soft-return",
+          "right": "occupied"
         },
         "mock_depth": {
           "near_objects": [
-            "group_center"
+            "turning_point_center_left",
+            "standing_person_center_right"
           ],
           "free_space": [
-            "right",
-            "far_right"
+            "front",
+            "left corridor"
+          ]
+        }
+      }
+    },
+    {
+      "frame_id": "frame_005",
+      "title": "Frame 5 - crowd near corridor wall",
+      "summary": "A group along the right corridor wall gets a narrow wall-side social caution band.",
+      "context": {
+        "robot_pose": {
+          "x": 48,
+          "y": 23,
+          "heading": "west"
+        },
+        "baseline_path_waypoints": [
+          [
+            48,
+            23
+          ],
+          [
+            13,
+            23
+          ]
+        ],
+        "local_waypoints": [
+          [
+            42,
+            23
+          ],
+          [
+            34,
+            23
+          ],
+          [
+            26,
+            23
+          ],
+          [
+            13,
+            23
+          ]
+        ],
+        "planned_path_direction": "forward",
+        "mock_lidar": {
+          "front": "partially-clear",
+          "front_left": "clear",
+          "front_right": "soft-return",
+          "right": "occupied"
+        },
+        "mock_depth": {
+          "near_objects": [
+            "standing_group_center_right"
+          ],
+          "free_space": [
+            "front_left",
+            "far_left"
           ]
         }
       }

@@ -7,6 +7,18 @@ GridPoint = Tuple[int, int]
 OBSTACLE = 255
 
 
+HEADING_VECTORS = {
+    "north": (0.0, -1.0),
+    "north-east": (0.707, -0.707),
+    "east": (1.0, 0.0),
+    "south-east": (0.707, 0.707),
+    "south": (0.0, 1.0),
+    "south-west": (-0.707, 0.707),
+    "west": (-1.0, 0.0),
+    "north-west": (-0.707, -0.707),
+}
+
+
 def local_to_global(
     local_cell: GridPoint,
     robot_pose: Dict,
@@ -16,16 +28,24 @@ def local_to_global(
     Project a robot-local cell into the global demo map.
 
     The robot sits near the bottom-center of the local view. Lower local y
-    values are farther ahead, which maps to decreasing global y in this demo.
+    values are farther ahead. Robot heading rotates that local forward axis
+    into the global T-junction map.
     """
     local_x, local_y = local_cell
     robot_x = int(robot_pose["x"])
     robot_y = int(robot_pose["y"])
     robot_local_x = local_size // 2
     robot_local_y = int(local_size * 0.9)
-    global_x = robot_x + (local_x - robot_local_x)
-    global_y = robot_y - (robot_local_y - local_y)
-    return global_x, global_y
+    lateral_distance = local_x - robot_local_x
+    forward_distance = robot_local_y - local_y
+
+    heading = robot_pose.get("heading", "north")
+    forward_x, forward_y = HEADING_VECTORS.get(heading, HEADING_VECTORS["north"])
+    right_x, right_y = -forward_y, forward_x
+
+    global_x = robot_x + lateral_distance * right_x + forward_distance * forward_x
+    global_y = robot_y + lateral_distance * right_y + forward_distance * forward_y
+    return int(round(global_x)), int(round(global_y))
 
 
 def fuse_local_semantic_costmap(

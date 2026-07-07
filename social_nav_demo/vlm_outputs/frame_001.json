@@ -1,8 +1,8 @@
 {
-  "scene": "Clear office hallway with open floor along the planned forward-right route.",
+  "scene": "Clear T-junction corridor stem with open floor ahead.",
   "objects": [],
   "navigation_context_used": {
-    "planned_path_direction": "forward-right",
+    "planned_path_direction": "forward",
     "lidar_summary": "Front, front-left, and front-right sectors are clear.",
     "depth_summary": "No near objects; free space extends through the visible corridor."
   },

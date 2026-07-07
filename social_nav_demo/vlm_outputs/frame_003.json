@@ -1,47 +1,33 @@
 {
-  "scene": "A doorway and blind corner create uncertain space near the intended corridor line.",
+  "scene": "A person is walking ahead of the robot along the same corridor direction while staying on the left side.",
   "objects": [
     {
-      "type": "doorway",
-      "image_position": "center",
+      "type": "person",
+      "image_position": "center-left",
       "path_relation": "near_planned_path",
-      "distance_estimate": "medium",
-      "motion_state": "unknown",
-      "facing_direction": "unknown",
-      "social_radius": 10,
-      "semantic_cost": 125,
-      "reason": "Doorways can introduce crossing traffic into the path."
-    },
-    {
-      "type": "blind_corner",
-      "image_position": "center-right",
-      "path_relation": "near_planned_path",
-      "distance_estimate": "medium",
-      "motion_state": "unknown",
-      "facing_direction": "unknown",
-      "social_radius": 13,
-      "semantic_cost": 170,
-      "reason": "Limited visibility makes the right corner uncertain."
+      "distance_estimate": "near",
+      "motion_state": "walking",
+      "mobility_class": "moving",
+      "facing_direction": "forward",
+      "social_radius": 7,
+      "semantic_cost": 190,
+      "reason": "The person is on the left side of the image but is walking forward away from the robot along the corridor."
     }
   ],
   "navigation_context_used": {
-    "planned_path_direction": "forward-right",
-    "lidar_summary": "Front-left is occupied and right side has an unknown gap.",
-    "depth_summary": "Doorway and blind-corner cues appear ahead."
+    "planned_path_direction": "forward-left",
+    "lidar_summary": "Front-left has a soft return near the moving person; front and right remain clearer.",
+    "depth_summary": "Moving person appears left of center but travels forward along the same corridor direction."
   },
   "local_costmap_intent": [
     {
       "shape": "circle",
-      "center": "center",
-      "radius": 12,
-      "cost": 125
-    },
-    {
-      "shape": "circle",
-      "center": "center-right",
-      "radius": 18,
-      "cost": 170
+      "center": "center-left",
+      "distance_estimate": "near",
+      "radius": 7,
+      "mobility_class": "moving",
+      "cost": 190
     }
   ],
-  "navigation_advice": "Bias the final path away from low-visibility doorway and corner regions."
+  "navigation_advice": "Avoid the person's current space while preserving right-side passing space."
 }

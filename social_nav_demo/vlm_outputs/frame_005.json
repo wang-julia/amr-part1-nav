@@ -1,0 +1,73 @@
+{
+  "scene": "A small group is standing in a line along the right wall of the hallway near the left arm of the T-junction.",
+  "objects": [
+    {
+      "type": "person",
+      "image_position": "center-right",
+      "path_relation": "near_planned_path",
+      "distance_estimate": "near",
+      "motion_state": "stationary",
+      "mobility_class": "possibly_moving",
+      "facing_direction": "unknown",
+      "social_radius": 6,
+      "semantic_cost": 145,
+      "reason": "One visible person in the group is along the right wall, not spanning the corridor."
+    },
+    {
+      "type": "person",
+      "image_position": "center-right",
+      "path_relation": "near_planned_path",
+      "distance_estimate": "medium",
+      "motion_state": "stationary",
+      "mobility_class": "possibly_moving",
+      "facing_direction": "unknown",
+      "social_radius": 6,
+      "semantic_cost": 145,
+      "reason": "A second visible person is also aligned with the right wall."
+    },
+    {
+      "type": "person",
+      "image_position": "top-right",
+      "path_relation": "away_from_path",
+      "distance_estimate": "far",
+      "motion_state": "stationary",
+      "mobility_class": "possibly_moving",
+      "facing_direction": "unknown",
+      "social_radius": 6,
+      "semantic_cost": 135,
+      "reason": "A third visible person is farther along the right wall, leaving the corridor center open."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward",
+    "lidar_summary": "Forward-right has a broad soft return from the group while the center-left side remains clearer.",
+    "depth_summary": "Multiple standing people are along the right corridor edge at medium range."
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center-right",
+      "distance_estimate": "near",
+      "radius": 6,
+      "mobility_class": "possibly_moving",
+      "cost": 145
+    },
+    {
+      "shape": "circle",
+      "center": "center-right",
+      "distance_estimate": "medium",
+      "radius": 6,
+      "mobility_class": "possibly_moving",
+      "cost": 145
+    },
+    {
+      "shape": "circle",
+      "center": "top-right",
+      "distance_estimate": "far",
+      "radius": 6,
+      "mobility_class": "possibly_moving",
+      "cost": 135
+    }
+  ],
+  "navigation_advice": "Keep clearance from the right-wall group while using the open center-left part of the hallway."
+}

@@ -32,6 +32,9 @@ http://localhost:8000
 - `mock_context.py` provides replayed robot pose, waypoints, LiDAR sectors, and depth hints.
 - `vlm_inference.py` defaults to replay mode and includes an optional Qwen2.5-VL hook.
 - `local_costmap.py` converts semantic JSON intent into a 40x40 local costmap.
+- Objects are classified as `static`, `possibly_moving`, or `moving` before shaping semantic costs.
+- Static objects such as parked bikes add only circular clearance cost.
+- Possibly moving objects or spaces get larger/stronger circular caution zones.
 - Walking people can add a directional predicted-motion cost zone in their facing direction.
 - `fusion.py` fuses local semantic costs into the global map without overwriting obstacles.
 - `prompts/qwen_semantic_costmap.txt` contains the strict JSON prompt.

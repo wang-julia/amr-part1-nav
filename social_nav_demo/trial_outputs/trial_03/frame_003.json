@@ -1,0 +1,33 @@
+{
+  "scene": "A person walking towards a door in a hallway.",
+  "objects": [
+    {
+      "type": "person",
+      "image_position": "center-left",
+      "path_relation": "away_from_path",
+      "distance_estimate": "medium",
+      "motion_state": "walking",
+      "mobility_class": "moving",
+      "facing_direction": "forward",
+      "social_radius": 1,
+      "semantic_cost": 150,
+      "reason": "Person is walking away from the robot."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward-left",
+    "lidar_summary": "Front soft-return, front-left clear, front-right clear, right clear",
+    "depth_summary": "Near objects: moving person center-left, free space: front, front-right"
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center-left",
+      "distance_estimate": "medium",
+      "radius": 7,
+      "mobility_class": "moving",
+      "cost": 150
+    }
+  ],
+  "navigation_advice": "Continue walking forward-left, avoiding the person."
+}

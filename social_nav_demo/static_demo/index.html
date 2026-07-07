@@ -22,9 +22,7 @@
             html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
             body {
               margin: 0;
-              background:
-                radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.16), transparent 28%),
-                linear-gradient(180deg, #08111f 0%, var(--bg) 42%, #050812 100%);
+              background: linear-gradient(180deg, #08111f 0%, var(--bg) 44%, #050812 100%);
               color: var(--text);
               font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
               line-height: 1.5;
@@ -61,30 +59,6 @@
             .overview-panel h2 { font-size: 1.1rem; margin-bottom: 10px; color: #dbeafe; }
             .overview-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
             .overview-list li { padding: 10px 12px; background: rgba(18, 29, 49, 0.72); border: 1px solid rgba(148, 163, 184, 0.16); border-radius: 8px; color: #d7e2f0; }
-            .architecture {
-              margin: 22px 0 18px;
-              display: grid;
-              grid-template-columns: repeat(3, minmax(0, 1fr));
-              gap: 10px;
-            }
-            .arch-node {
-              min-height: 66px;
-              display: grid;
-              place-items: center;
-              text-align: center;
-              padding: 12px;
-              border: 1px solid var(--line);
-              border-radius: 8px;
-              background: linear-gradient(180deg, rgba(18, 29, 49, 0.95), rgba(10, 17, 30, 0.92));
-              color: #eaf6ff;
-              font-weight: 700;
-            }
-            .timeline {
-              display: grid;
-              grid-template-columns: repeat(4, minmax(0, 1fr));
-              gap: 10px;
-              margin: 18px 0 0;
-            }
             .demo-nav {
               position: sticky;
               top: 0;
@@ -93,8 +67,7 @@
               background: linear-gradient(180deg, rgba(7, 11, 20, 0.96), rgba(7, 11, 20, 0.78));
               backdrop-filter: blur(14px);
             }
-            .demo-nav .architecture { display: none; }
-            .demo-nav .timeline { margin: 0; }
+            .timeline { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 0; }
             .nav-button {
               text-decoration: none;
               color: var(--text);
@@ -106,9 +79,8 @@
               gap: 10px;
               align-items: center;
               min-height: 58px;
-              transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
             }
-            .nav-button:hover { border-color: rgba(103, 232, 249, 0.58); background: #122035; transform: translateY(-1px); }
+            .nav-button:hover { border-color: rgba(103, 232, 249, 0.58); background: #122035; }
             .nav-button span {
               width: 34px;
               height: 34px;
@@ -135,39 +107,50 @@
             h2, h3, h4 { margin: 0; letter-spacing: 0; }
             h2 { font-size: clamp(1.25rem, 2.2vw, 1.72rem); }
             .demo-heading p { margin: 3px 0 0; color: var(--muted); }
-            .risk-chip { margin-left: auto; white-space: nowrap; padding: 8px 10px; border-radius: 999px; color: #fef3c7; border: 1px solid rgba(250, 204, 21, 0.32); background: rgba(250, 204, 21, 0.08); font-weight: 800; }
+            .trial-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+            .trial-pill {
+              cursor: pointer;
+              color: #dbeafe;
+              border: 1px solid rgba(148, 163, 184, 0.26);
+              background: rgba(18, 29, 49, 0.68);
+              border-radius: 999px;
+              padding: 5px 10px;
+              font: inherit;
+              font-size: 0.78rem;
+              font-weight: 800;
+            }
+            .trial-pill.active { color: #07111f; background: var(--green); border-color: transparent; }
+            .trial-view { display: none; }
+            .trial-view.active { display: block; }
+            .trial-status {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 10px;
+              color: #dff8ff;
+              font-weight: 800;
+            }
+            .trial-status span, .trial-status strong {
+              padding: 6px 9px;
+              border-radius: 999px;
+              border: 1px solid rgba(148, 163, 184, 0.24);
+              background: rgba(18, 29, 49, 0.72);
+            }
+            .trial-status strong { color: #fef3c7; border-color: rgba(250, 204, 21, 0.32); }
             .demo-grid {
               display: grid;
               grid-template-columns: minmax(220px, 0.86fr) minmax(420px, 1.42fr) minmax(360px, 1fr);
               gap: 12px;
               align-items: stretch;
-              height: calc(100vh - 190px);
-              min-height: 520px;
+              height: calc(100vh - 224px);
+              min-height: 500px;
             }
             .visual-stack { display: grid; grid-template-rows: minmax(0, 0.68fr) minmax(0, 0.62fr); gap: 12px; min-height: 0; }
             .camera-panel, .local-panel, .map-panel, .insight-panel { min-height: 0; overflow: hidden; }
-            .camera-panel img, .local-panel img, .map-panel img {
-              width: 100%;
-              height: calc(100% - 32px);
-              object-fit: contain;
-            }
-            .panel {
-              background: var(--surface);
-              border: 1px solid var(--line);
-              border-radius: 8px;
-              padding: 14px;
-              min-width: 0;
-            }
-            .panel.wide { grid-column: span 2; }
+            .camera-panel img, .local-panel img, .map-panel img { width: 100%; height: calc(100% - 32px); object-fit: contain; }
+            .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; }
             .panel h3 { font-size: 0.95rem; color: #dbeafe; margin-bottom: 10px; }
-            .panel img {
-              width: 100%;
-              display: block;
-              border-radius: 6px;
-              border: 1px solid rgba(148, 163, 184, 0.18);
-              background: #030712;
-            }
-            .map-panel h3 { margin-bottom: 8px; }
+            .panel img { width: 100%; display: block; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.18); background: #030712; }
             .insight-panel { display: flex; flex-direction: column; gap: 10px; }
             pre {
               margin: 0;
@@ -191,7 +174,7 @@
             footer { color: var(--muted); padding-top: 24px; border-top: 1px solid rgba(148, 163, 184, 0.18); }
             @media (max-width: 1180px) {
               .hero-grid { grid-template-columns: 1fr; }
-              .architecture { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              .timeline { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
               .demo-grid { grid-template-columns: 1fr; height: auto; min-height: 0; }
               .visual-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
               .camera-panel img, .local-panel img, .map-panel img { height: auto; }
@@ -199,11 +182,9 @@
             }
             @media (max-width: 760px) {
               main { width: min(100% - 24px, 760px); }
-              .architecture, .timeline, .metric-columns, .visual-stack { grid-template-columns: 1fr; }
-              .panel.wide { grid-column: auto; }
+              .timeline, .metric-columns, .visual-stack { grid-template-columns: 1fr; }
               .hero { min-height: auto; }
-              .demo-heading { flex-wrap: wrap; }
-              .risk-chip { margin-left: 0; }
+              .demo-heading, .trial-status { flex-wrap: wrap; }
             }
           </style>
         </head>
@@ -212,272 +193,151 @@
             <section class="hero">
               <div class="hero-grid">
                 <div>
-                  <div class="eyebrow">Qwen2.5-VL-style semantic understanding for safer social robot navigation</div>
+                  <div class="eyebrow">Qwen2.5-VL semantic understanding for safer social robot navigation</div>
                   <h1>Local VLM Semantic Costmap Layer</h1>
-                  <p class="subtitle">A local VLM-style module interprets robot camera frames, combines them with mocked navigation context, and contributes semantic costs for safer social navigation.</p>
+                  <p class="subtitle">A local VLM module interprets robot camera frames, combines them with mocked navigation context, and contributes semantic costs for safer social navigation.</p>
                   <p class="principle">The VLM does not control the robot. It converts visual and navigation context into semantic costmap updates. A deterministic planner still makes the final path decision.</p>
                 </div>
                 <aside class="overview-panel">
                   <h2>Project Overview</h2>
                   <ul class="overview-list">
-                    <li>Semantic intent becomes a 40x40 local costmap, not a robot command.</li>
-                    <li>Walking people produce a circular personal-space zone plus a directional predicted-motion zone.</li>
-                    <li>Local semantic costs fuse into a 100x100 global demo costmap while hard obstacles stay fixed.</li>
-                    <li>A* visualizes baseline versus VLM-enhanced paths for four office hallway moments.</li>
+                    <li>Semantic JSON becomes a 40x40 robot-local costmap.</li>
+                    <li>Objects are classified as static, possibly moving, or moving before costs are shaped.</li>
+                    <li>Static objects get compact clearance; moving people can add directional prediction.</li>
+                    <li>Wall-side groups use a narrow band so the corridor remains passable.</li>
+                    <li>A* visualizes baseline versus VLM-enhanced paths for five robot-photo moments along the T-junction.</li>
                   </ul>
                 </aside>
               </div>
             </section>
-
             <section class="demo-nav">
-              <div class="architecture" aria-label="Architecture diagram">
-                <div class="arch-node">Robot Camera Frame</div>
-                <div class="arch-node">Local VLM Semantic JSON</div>
-                <div class="arch-node">Mock Waypoints / LiDAR / Depth</div>
-                <div class="arch-node">40x40 Local Semantic Costmap</div>
-                <div class="arch-node">Global Costmap Fusion</div>
-                <div class="arch-node">A* Path Visualization</div>
-              </div>
               <nav class="timeline" aria-label="Office hallway navigation buttons">
-                <a class='nav-button' href='#frame_001'><span>001</span>clear hallway</a><a class='nav-button' href='#frame_002'><span>002</span>walking person near planned path</a><a class='nav-button' href='#frame_003'><span>003</span>doorway and blind corner</a><a class='nav-button' href='#frame_004'><span>004</span>group partially blocks corridor</a>
+                <a class='nav-button' href='#frame_002'><span>1</span>standing person</a>
               </nav>
-            </section>
-
-
-            <section class="demo-screen" id="frame_001">
-              <div class="demo-heading">
-                <span class="step">01</span>
-                <div>
-                  <h2>Clear Hallway</h2>
-                  <p>Baseline and enhanced paths are nearly identical because no social risk is visible.</p>
-                </div>
-                <div class="risk-chip">Risk 0 -> 0</div>
-              </div>
-              <div class="demo-grid">
-                <div class="visual-stack">
-                  <article class="panel camera-panel">
-                    <h3>Robot Camera Frame</h3>
-                    <img src="assets/frame_001_camera.png" alt="Frame 1 - clear hallway synthetic camera frame" />
-                  </article>
-                  <article class="panel local-panel">
-                    <h3>40x40 Local Semantic Costmap</h3>
-                    <img src="assets/frame_001_local_costmap.png" alt="Local semantic costmap heatmap" />
-                  </article>
-                </div>
-                <article class="panel map-panel">
-                  <h3>Global Costmap with Baseline and Enhanced Paths</h3>
-                  <img src="assets/frame_001_global_costmap.png" alt="Global costmap path comparison" />
-                </article>
-                <aside class="panel insight-panel">
-                  <h3>Metrics Comparison</h3>
-                  <div class="metric-columns">
-                    <div>
-                      <h4>Baseline Planner</h4>
-
-    <dl class="metrics">
-      <div><dt>Path length</dt><dd>96.6</dd></div>
-      <div><dt>Average cost</dt><dd>1.49</dd></div>
-      <div><dt>Social violations</dt><dd>0</dd></div>
-      <div><dt>Risk score</dt><dd>0/100</dd></div>
-    </dl>
-
-                    </div>
-                    <div>
-                      <h4>VLM-Enhanced Planner</h4>
-
-    <dl class="metrics">
-      <div><dt>Path length</dt><dd>96.6</dd></div>
-      <div><dt>Average cost</dt><dd>1.49</dd></div>
-      <div><dt>Social violations</dt><dd>0</dd></div>
-      <div><dt>Risk score</dt><dd>0/100</dd></div>
-    </dl>
-
-                    </div>
-                  </div>
-                  <p class="summary">Risk reduction: 0 points. Slightly longer path, lower semantic risk.</p>
-                  <div class="code-pair">
-                    <div>
-                      <h3>VLM Semantic JSON</h3>
-                      <pre>{
-  &quot;scene&quot;: &quot;Clear office hallway with open floor along the planned forward-right route.&quot;,
-  &quot;objects&quot;: [],
-  &quot;navigation_context_used&quot;: {
-    &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
-    &quot;lidar_summary&quot;: &quot;Front, front-left, and front-right sectors are clear.&quot;,
-    &quot;depth_summary&quot;: &quot;No near objects; free space extends through the visible corridor.&quot;
-  },
-  &quot;local_costmap_intent&quot;: [],
-  &quot;navigation_advice&quot;: &quot;No semantic detour is needed; continue evaluating the deterministic costmap.&quot;
-}</pre>
-                    </div>
-                    <div>
-                      <h3>Mock Navigation Context</h3>
-                      <pre>{
-  &quot;robot_pose&quot;: {
-    &quot;x&quot;: 18,
-    &quot;y&quot;: 82,
-    &quot;heading&quot;: &quot;north-east&quot;
-  },
-  &quot;local_waypoints&quot;: [
-    [
-      20,
-      78
-    ],
-    [
-      28,
-      70
-    ],
-    [
-      36,
-      62
-    ],
-    [
-      45,
-      52
-    ]
-  ],
-  &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
-  &quot;mock_lidar&quot;: {
-    &quot;front&quot;: &quot;clear&quot;,
-    &quot;front_left&quot;: &quot;clear&quot;,
-    &quot;front_right&quot;: &quot;clear&quot;,
-    &quot;right&quot;: &quot;clear&quot;
-  },
-  &quot;mock_depth&quot;: {
-    &quot;near_objects&quot;: [],
-    &quot;free_space&quot;: [
-      &quot;front&quot;,
-      &quot;front_right&quot;,
-      &quot;front_left&quot;
-    ]
-  }
-}</pre>
-                    </div>
-                  </div>
-                </aside>
-              </div>
             </section>
 
             <section class="demo-screen" id="frame_002">
               <div class="demo-heading">
-                <span class="step">02</span>
+                <span class="step">1</span>
                 <div>
-                  <h2>Walking Person Near Planned Path</h2>
-                  <p>The replayed VLM JSON adds personal-space cost and extends it in the person&#x27;s facing direction.</p>
+                  <h2>Standing Person</h2>
+                  <p>A standing person is possibly moving, so the demo adds a cautious circular personal-space zone.</p>
+                  <nav class='trial-pills' aria-label='Trial buttons'><button class='trial-pill active' type='button' data-frame-button='frame_002' data-trial-target='frame_002_trial_00'>Trial 0</button><button class='trial-pill' type='button' data-frame-button='frame_002' data-trial-target='frame_002_trial_01'>Trial 1</button><button class='trial-pill' type='button' data-frame-button='frame_002' data-trial-target='frame_002_trial_02'>Trial 2</button><button class='trial-pill' type='button' data-frame-button='frame_002' data-trial-target='frame_002_trial_03'>Trial 3</button></nav>
                 </div>
-                <div class="risk-chip">Risk 26 -> 0</div>
               </div>
-              <div class="demo-grid">
-                <div class="visual-stack">
-                  <article class="panel camera-panel">
-                    <h3>Robot Camera Frame</h3>
-                    <img src="assets/frame_002_camera.png" alt="Frame 2 - walking person near planned path synthetic camera frame" />
-                  </article>
-                  <article class="panel local-panel">
-                    <h3>40x40 Local Semantic Costmap</h3>
-                    <img src="assets/frame_002_local_costmap.png" alt="Local semantic costmap heatmap" />
-                  </article>
-                </div>
-                <article class="panel map-panel">
-                  <h3>Global Costmap with Baseline and Enhanced Paths</h3>
-                  <img src="assets/frame_002_global_costmap.png" alt="Global costmap path comparison" />
+              <div class="trial-stage">
+
+          <div class="trial-view active" data-frame-panel="frame_002" data-trial-panel="frame_002_trial_00">
+            <div class="trial-status">
+              <span>Trial 0</span>
+              <span>Curated replay JSON</span>
+              <strong>Risk 14 -> 0</strong>
+            </div>
+            <div class="demo-grid">
+              <div class="visual-stack">
+                <article class="panel camera-panel">
+                  <h3>Robot Camera Frame</h3>
+                  <img src="assets/frame_002_camera.jpg" alt="Frame 2 - standing person robot camera photo" />
                 </article>
-                <aside class="panel insight-panel">
-                  <h3>Metrics Comparison</h3>
-                  <div class="metric-columns">
-                    <div>
-                      <h4>Baseline Planner</h4>
+                <article class="panel local-panel">
+                  <h3>40x40 Local Semantic Costmap</h3>
+                  <img src="assets/trial_00_frame_002_local_costmap.png" alt="Local semantic costmap heatmap" />
+                </article>
+              </div>
+              <article class="panel map-panel">
+                <h3>T-Junction Demo Map with Baseline and Enhanced Paths</h3>
+                <img src="assets/trial_00_frame_002_global_costmap.png" alt="Global costmap path comparison" />
+              </article>
+              <aside class="panel insight-panel">
+                <h3>Metrics Comparison</h3>
+                <div class="metric-columns">
+                  <div>
+                    <h4>Baseline Planner</h4>
 
     <dl class="metrics">
-      <div><dt>Path length</dt><dd>96.6</dd></div>
-      <div><dt>Average cost</dt><dd>34.76</dd></div>
-      <div><dt>Social violations</dt><dd>5</dd></div>
-      <div><dt>Risk score</dt><dd>26/100</dd></div>
+      <div><dt>Path length</dt><dd>75.0</dd></div>
+      <div><dt>Average cost</dt><dd>18.69</dd></div>
+      <div><dt>Social violations</dt><dd>3</dd></div>
+      <div><dt>Risk score</dt><dd>14/100</dd></div>
     </dl>
 
-                    </div>
-                    <div>
-                      <h4>VLM-Enhanced Planner</h4>
+                  </div>
+                  <div>
+                    <h4>VLM-Enhanced Planner</h4>
 
     <dl class="metrics">
-      <div><dt>Path length</dt><dd>100.1</dd></div>
-      <div><dt>Average cost</dt><dd>1.38</dd></div>
+      <div><dt>Path length</dt><dd>76.6</dd></div>
+      <div><dt>Average cost</dt><dd>1.11</dd></div>
       <div><dt>Social violations</dt><dd>0</dd></div>
       <div><dt>Risk score</dt><dd>0/100</dd></div>
     </dl>
 
-                    </div>
                   </div>
-                  <p class="summary">Risk reduction: 26 points. Slightly longer path, lower semantic risk.</p>
-                  <div class="code-pair">
-                    <div>
-                      <h3>VLM Semantic JSON</h3>
-                      <pre>{
-  &quot;scene&quot;: &quot;Office hallway. A person is walking near the robot&#x27;s planned path and facing forward-left across the corridor.&quot;,
+                </div>
+                <p class="summary">Risk reduction: 14 points. Slightly longer path, lower semantic risk.</p>
+                <div class="code-pair">
+                  <div>
+                    <h3>VLM Semantic JSON</h3>
+                    <pre>{
+  &quot;scene&quot;: &quot;A person is standing in the corridor near the robot&#x27;s forward path.&quot;,
   &quot;objects&quot;: [
     {
       &quot;type&quot;: &quot;person&quot;,
-      &quot;image_position&quot;: &quot;center-right&quot;,
-      &quot;path_relation&quot;: &quot;near_planned_path&quot;,
+      &quot;image_position&quot;: &quot;center-left&quot;,
+      &quot;path_relation&quot;: &quot;on_planned_path&quot;,
       &quot;distance_estimate&quot;: &quot;near&quot;,
-      &quot;motion_state&quot;: &quot;walking&quot;,
-      &quot;facing_direction&quot;: &quot;forward-left&quot;,
-      &quot;social_radius&quot;: 16,
-      &quot;semantic_cost&quot;: 225,
-      &quot;reason&quot;: &quot;Maintain personal space and account for the pedestrian&#x27;s likely walking direction.&quot;
+      &quot;motion_state&quot;: &quot;stationary&quot;,
+      &quot;mobility_class&quot;: &quot;possibly_moving&quot;,
+      &quot;facing_direction&quot;: &quot;unknown&quot;,
+      &quot;social_radius&quot;: 4,
+      &quot;semantic_cost&quot;: 165,
+      &quot;reason&quot;: &quot;A standing person may start moving, so preserve personal space without projecting a motion direction.&quot;
     }
   ],
   &quot;navigation_context_used&quot;: {
-    &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
-    &quot;lidar_summary&quot;: &quot;Front is clear but front-right has a soft return.&quot;,
-    &quot;depth_summary&quot;: &quot;Near walking person detected at center-right.&quot;
+    &quot;planned_path_direction&quot;: &quot;forward&quot;,
+    &quot;lidar_summary&quot;: &quot;Front has a person-sized soft return while side sectors remain partly clear.&quot;,
+    &quot;depth_summary&quot;: &quot;Standing person detected in the central near field.&quot;
   },
   &quot;local_costmap_intent&quot;: [
     {
       &quot;shape&quot;: &quot;circle&quot;,
-      &quot;center&quot;: &quot;center-right&quot;,
-      &quot;radius&quot;: 16,
-      &quot;cost&quot;: 225
-    },
-    {
-      &quot;shape&quot;: &quot;directional_ellipse&quot;,
-      &quot;center&quot;: &quot;center-right&quot;,
-      &quot;direction&quot;: &quot;forward-left&quot;,
-      &quot;length&quot;: 20,
-      &quot;width&quot;: 8,
-      &quot;cost&quot;: 205
+      &quot;center&quot;: &quot;center-left&quot;,
+      &quot;radius&quot;: 4,
+      &quot;mobility_class&quot;: &quot;possibly_moving&quot;,
+      &quot;cost&quot;: 165
     }
   ],
-  &quot;navigation_advice&quot;: &quot;Prefer a wider route that avoids both current personal space and likely near-term pedestrian motion.&quot;
+  &quot;navigation_advice&quot;: &quot;Bias the path around the person&#x27;s personal-space zone, but do not add directional prediction.&quot;
 }</pre>
-                    </div>
-                    <div>
-                      <h3>Mock Navigation Context</h3>
-                      <pre>{
+                  </div>
+                  <div>
+                    <h3>Mock Navigation Context</h3>
+                    <pre>{
   &quot;robot_pose&quot;: {
-    &quot;x&quot;: 28,
-    &quot;y&quot;: 70,
-    &quot;heading&quot;: &quot;north-east&quot;
+    &quot;x&quot;: 52,
+    &quot;y&quot;: 66,
+    &quot;heading&quot;: &quot;north&quot;
   },
   &quot;local_waypoints&quot;: [
     [
-      30,
-      67
+      52,
+      62
     ],
     [
-      38,
-      59
+      52,
+      52
     ],
     [
-      47,
-      50
-    ],
-    [
-      56,
+      52,
       42
+    ],
+    [
+      52,
+      30
     ]
   ],
-  &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
+  &quot;planned_path_direction&quot;: &quot;forward&quot;,
   &quot;mock_lidar&quot;: {
     &quot;front&quot;: &quot;clear&quot;,
     &quot;front_left&quot;: &quot;clear&quot;,
@@ -486,310 +346,438 @@
   },
   &quot;mock_depth&quot;: {
     &quot;near_objects&quot;: [
-      &quot;walking_person_center_right&quot;
+      &quot;standing_person_center&quot;
     ],
     &quot;free_space&quot;: [
       &quot;front_left&quot;,
-      &quot;far_left&quot;
+      &quot;front_right&quot;
     ]
   }
 }</pre>
-                    </div>
                   </div>
-                </aside>
-              </div>
-            </section>
+                </div>
+              </aside>
+            </div>
+          </div>
 
-            <section class="demo-screen" id="frame_003">
-              <div class="demo-heading">
-                <span class="step">03</span>
-                <div>
-                  <h2>Doorway And Blind Corner</h2>
-                  <p>Medium semantic caution zones bias the route away from uncertain space.</p>
-                </div>
-                <div class="risk-chip">Risk 11 -> 0</div>
-              </div>
-              <div class="demo-grid">
-                <div class="visual-stack">
-                  <article class="panel camera-panel">
-                    <h3>Robot Camera Frame</h3>
-                    <img src="assets/frame_003_camera.png" alt="Frame 3 - doorway and blind corner synthetic camera frame" />
-                  </article>
-                  <article class="panel local-panel">
-                    <h3>40x40 Local Semantic Costmap</h3>
-                    <img src="assets/frame_003_local_costmap.png" alt="Local semantic costmap heatmap" />
-                  </article>
-                </div>
-                <article class="panel map-panel">
-                  <h3>Global Costmap with Baseline and Enhanced Paths</h3>
-                  <img src="assets/frame_003_global_costmap.png" alt="Global costmap path comparison" />
+          <div class="trial-view" data-frame-panel="frame_002" data-trial-panel="frame_002_trial_01">
+            <div class="trial-status">
+              <span>Trial 1</span>
+              <span>Generated by Qwen</span>
+              <strong>Risk 8 -> 2</strong>
+            </div>
+            <div class="demo-grid">
+              <div class="visual-stack">
+                <article class="panel camera-panel">
+                  <h3>Robot Camera Frame</h3>
+                  <img src="assets/frame_002_camera.jpg" alt="Frame 2 - standing person robot camera photo" />
                 </article>
-                <aside class="panel insight-panel">
-                  <h3>Metrics Comparison</h3>
-                  <div class="metric-columns">
-                    <div>
-                      <h4>Baseline Planner</h4>
+                <article class="panel local-panel">
+                  <h3>40x40 Local Semantic Costmap</h3>
+                  <img src="assets/trial_01_frame_002_local_costmap.png" alt="Local semantic costmap heatmap" />
+                </article>
+              </div>
+              <article class="panel map-panel">
+                <h3>T-Junction Demo Map with Baseline and Enhanced Paths</h3>
+                <img src="assets/trial_01_frame_002_global_costmap.png" alt="Global costmap path comparison" />
+              </article>
+              <aside class="panel insight-panel">
+                <h3>Metrics Comparison</h3>
+                <div class="metric-columns">
+                  <div>
+                    <h4>Baseline Planner</h4>
 
     <dl class="metrics">
-      <div><dt>Path length</dt><dd>96.6</dd></div>
-      <div><dt>Average cost</dt><dd>23.96</dd></div>
+      <div><dt>Path length</dt><dd>75.0</dd></div>
+      <div><dt>Average cost</dt><dd>16.34</dd></div>
       <div><dt>Social violations</dt><dd>0</dd></div>
-      <div><dt>Risk score</dt><dd>11/100</dd></div>
+      <div><dt>Risk score</dt><dd>8/100</dd></div>
     </dl>
 
-                    </div>
-                    <div>
-                      <h4>VLM-Enhanced Planner</h4>
-
-    <dl class="metrics">
-      <div><dt>Path length</dt><dd>102.5</dd></div>
-      <div><dt>Average cost</dt><dd>1.31</dd></div>
-      <div><dt>Social violations</dt><dd>0</dd></div>
-      <div><dt>Risk score</dt><dd>0/100</dd></div>
-    </dl>
-
-                    </div>
                   </div>
-                  <p class="summary">Risk reduction: 11 points. Slightly longer path, lower semantic risk.</p>
-                  <div class="code-pair">
-                    <div>
-                      <h3>VLM Semantic JSON</h3>
-                      <pre>{
-  &quot;scene&quot;: &quot;A doorway and blind corner create uncertain space near the intended corridor line.&quot;,
+                  <div>
+                    <h4>VLM-Enhanced Planner</h4>
+
+    <dl class="metrics">
+      <div><dt>Path length</dt><dd>77.5</dd></div>
+      <div><dt>Average cost</dt><dd>4.66</dd></div>
+      <div><dt>Social violations</dt><dd>0</dd></div>
+      <div><dt>Risk score</dt><dd>2/100</dd></div>
+    </dl>
+
+                  </div>
+                </div>
+                <p class="summary">Risk reduction: 6 points. Slightly longer path, lower semantic risk.</p>
+                <div class="code-pair">
+                  <div>
+                    <h3>VLM Semantic JSON</h3>
+                    <pre>{
+  &quot;scene&quot;: &quot;A person standing in the middle of a hallway.&quot;,
   &quot;objects&quot;: [
     {
-      &quot;type&quot;: &quot;doorway&quot;,
+      &quot;type&quot;: &quot;person&quot;,
       &quot;image_position&quot;: &quot;center&quot;,
-      &quot;path_relation&quot;: &quot;near_planned_path&quot;,
+      &quot;path_relation&quot;: &quot;away_from_path&quot;,
       &quot;distance_estimate&quot;: &quot;medium&quot;,
-      &quot;motion_state&quot;: &quot;unknown&quot;,
-      &quot;facing_direction&quot;: &quot;unknown&quot;,
-      &quot;social_radius&quot;: 10,
-      &quot;semantic_cost&quot;: 125,
-      &quot;reason&quot;: &quot;Doorways can introduce crossing traffic into the path.&quot;
-    },
-    {
-      &quot;type&quot;: &quot;blind_corner&quot;,
-      &quot;image_position&quot;: &quot;center-right&quot;,
-      &quot;path_relation&quot;: &quot;near_planned_path&quot;,
-      &quot;distance_estimate&quot;: &quot;medium&quot;,
-      &quot;motion_state&quot;: &quot;unknown&quot;,
-      &quot;facing_direction&quot;: &quot;unknown&quot;,
-      &quot;social_radius&quot;: 13,
-      &quot;semantic_cost&quot;: 170,
-      &quot;reason&quot;: &quot;Limited visibility makes the right corner uncertain.&quot;
+      &quot;motion_state&quot;: &quot;walking&quot;,
+      &quot;mobility_class&quot;: &quot;moving&quot;,
+      &quot;facing_direction&quot;: &quot;forward&quot;,
+      &quot;social_radius&quot;: 1,
+      &quot;semantic_cost&quot;: 150,
+      &quot;reason&quot;: &quot;Person is walking and facing forward.&quot;
     }
   ],
   &quot;navigation_context_used&quot;: {
-    &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
-    &quot;lidar_summary&quot;: &quot;Front-left is occupied and right side has an unknown gap.&quot;,
-    &quot;depth_summary&quot;: &quot;Doorway and blind-corner cues appear ahead.&quot;
+    &quot;planned_path_direction&quot;: &quot;forward&quot;,
+    &quot;lidar_summary&quot;: &quot;Front and right sectors are clear, front left sector is soft return.&quot;,
+    &quot;depth_summary&quot;: &quot;Near objects are present, free space is available.&quot;
   },
   &quot;local_costmap_intent&quot;: [
     {
       &quot;shape&quot;: &quot;circle&quot;,
       &quot;center&quot;: &quot;center&quot;,
-      &quot;radius&quot;: 12,
-      &quot;cost&quot;: 125
-    },
-    {
-      &quot;shape&quot;: &quot;circle&quot;,
-      &quot;center&quot;: &quot;center-right&quot;,
-      &quot;radius&quot;: 18,
-      &quot;cost&quot;: 170
+      &quot;distance_estimate&quot;: &quot;medium&quot;,
+      &quot;radius&quot;: 7,
+      &quot;mobility_class&quot;: &quot;moving&quot;,
+      &quot;cost&quot;: 150
     }
   ],
-  &quot;navigation_advice&quot;: &quot;Bias the final path away from low-visibility doorway and corner regions.&quot;
+  &quot;navigation_advice&quot;: &quot;Continue forward, maintain a safe distance from the person.&quot;
 }</pre>
-                    </div>
-                    <div>
-                      <h3>Mock Navigation Context</h3>
-                      <pre>{
+                  </div>
+                  <div>
+                    <h3>Mock Navigation Context</h3>
+                    <pre>{
   &quot;robot_pose&quot;: {
-    &quot;x&quot;: 42,
-    &quot;y&quot;: 58,
-    &quot;heading&quot;: &quot;north-east&quot;
+    &quot;x&quot;: 52,
+    &quot;y&quot;: 66,
+    &quot;heading&quot;: &quot;north&quot;
   },
   &quot;local_waypoints&quot;: [
     [
-      44,
-      55
+      52,
+      62
     ],
     [
       52,
-      47
+      52
     ],
     [
-      60,
-      39
+      52,
+      42
     ],
     [
-      68,
-      31
+      52,
+      30
     ]
   ],
-  &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
+  &quot;planned_path_direction&quot;: &quot;forward&quot;,
   &quot;mock_lidar&quot;: {
     &quot;front&quot;: &quot;clear&quot;,
-    &quot;front_left&quot;: &quot;occupied&quot;,
-    &quot;front_right&quot;: &quot;clear&quot;,
-    &quot;right&quot;: &quot;unknown-gap&quot;
-  },
-  &quot;mock_depth&quot;: {
-    &quot;near_objects&quot;: [
-      &quot;doorway_center_left&quot;,
-      &quot;blind_corner_top_right&quot;
-    ],
-    &quot;free_space&quot;: [
-      &quot;front_right&quot;,
-      &quot;center&quot;
-    ]
-  }
-}</pre>
-                    </div>
-                  </div>
-                </aside>
-              </div>
-            </section>
-
-            <section class="demo-screen" id="frame_004">
-              <div class="demo-heading">
-                <span class="step">04</span>
-                <div>
-                  <h2>Group Partially Blocks Corridor</h2>
-                  <p>A larger social zone makes the enhanced path longer but lower risk.</p>
-                </div>
-                <div class="risk-chip">Risk 16 -> 0</div>
-              </div>
-              <div class="demo-grid">
-                <div class="visual-stack">
-                  <article class="panel camera-panel">
-                    <h3>Robot Camera Frame</h3>
-                    <img src="assets/frame_004_camera.png" alt="Frame 4 - group partially blocks corridor synthetic camera frame" />
-                  </article>
-                  <article class="panel local-panel">
-                    <h3>40x40 Local Semantic Costmap</h3>
-                    <img src="assets/frame_004_local_costmap.png" alt="Local semantic costmap heatmap" />
-                  </article>
-                </div>
-                <article class="panel map-panel">
-                  <h3>Global Costmap with Baseline and Enhanced Paths</h3>
-                  <img src="assets/frame_004_global_costmap.png" alt="Global costmap path comparison" />
-                </article>
-                <aside class="panel insight-panel">
-                  <h3>Metrics Comparison</h3>
-                  <div class="metric-columns">
-                    <div>
-                      <h4>Baseline Planner</h4>
-
-    <dl class="metrics">
-      <div><dt>Path length</dt><dd>96.6</dd></div>
-      <div><dt>Average cost</dt><dd>33.57</dd></div>
-      <div><dt>Social violations</dt><dd>0</dd></div>
-      <div><dt>Risk score</dt><dd>16/100</dd></div>
-    </dl>
-
-                    </div>
-                    <div>
-                      <h4>VLM-Enhanced Planner</h4>
-
-    <dl class="metrics">
-      <div><dt>Path length</dt><dd>99.5</dd></div>
-      <div><dt>Average cost</dt><dd>1.39</dd></div>
-      <div><dt>Social violations</dt><dd>0</dd></div>
-      <div><dt>Risk score</dt><dd>0/100</dd></div>
-    </dl>
-
-                    </div>
-                  </div>
-                  <p class="summary">Risk reduction: 16 points. Slightly longer path, lower semantic risk.</p>
-                  <div class="code-pair">
-                    <div>
-                      <h3>VLM Semantic JSON</h3>
-                      <pre>{
-  &quot;scene&quot;: &quot;A small group is partially blocking the shared office corridor.&quot;,
-  &quot;objects&quot;: [
-    {
-      &quot;type&quot;: &quot;group&quot;,
-      &quot;image_position&quot;: &quot;center&quot;,
-      &quot;path_relation&quot;: &quot;on_planned_path&quot;,
-      &quot;distance_estimate&quot;: &quot;near&quot;,
-      &quot;motion_state&quot;: &quot;stationary&quot;,
-      &quot;facing_direction&quot;: &quot;unknown&quot;,
-      &quot;social_radius&quot;: 20,
-      &quot;semantic_cost&quot;: 240,
-      &quot;reason&quot;: &quot;Avoid cutting through a group and preserve a respectful passing distance.&quot;
-    }
-  ],
-  &quot;navigation_context_used&quot;: {
-    &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
-    &quot;lidar_summary&quot;: &quot;Front has a soft return, front-left is occupied, and right is clearer.&quot;,
-    &quot;depth_summary&quot;: &quot;Group detected in the central near field; free space remains to the right.&quot;
-  },
-  &quot;local_costmap_intent&quot;: [
-    {
-      &quot;shape&quot;: &quot;circle&quot;,
-      &quot;center&quot;: &quot;center&quot;,
-      &quot;radius&quot;: 20,
-      &quot;cost&quot;: 240
-    }
-  ],
-  &quot;navigation_advice&quot;: &quot;A slightly longer route around the group is lower risk than the shortest path.&quot;
-}</pre>
-                    </div>
-                    <div>
-                      <h3>Mock Navigation Context</h3>
-                      <pre>{
-  &quot;robot_pose&quot;: {
-    &quot;x&quot;: 55,
-    &quot;y&quot;: 46,
-    &quot;heading&quot;: &quot;north-east&quot;
-  },
-  &quot;local_waypoints&quot;: [
-    [
-      58,
-      43
-    ],
-    [
-      65,
-      36
-    ],
-    [
-      73,
-      28
-    ],
-    [
-      82,
-      20
-    ]
-  ],
-  &quot;planned_path_direction&quot;: &quot;forward-right&quot;,
-  &quot;mock_lidar&quot;: {
-    &quot;front&quot;: &quot;soft-return&quot;,
-    &quot;front_left&quot;: &quot;occupied&quot;,
-    &quot;front_right&quot;: &quot;partially-clear&quot;,
+    &quot;front_left&quot;: &quot;clear&quot;,
+    &quot;front_right&quot;: &quot;soft-return&quot;,
     &quot;right&quot;: &quot;clear&quot;
   },
   &quot;mock_depth&quot;: {
     &quot;near_objects&quot;: [
-      &quot;group_center&quot;
+      &quot;standing_person_center&quot;
     ],
     &quot;free_space&quot;: [
-      &quot;right&quot;,
-      &quot;far_right&quot;
+      &quot;front_left&quot;,
+      &quot;front_right&quot;
     ]
   }
 }</pre>
-                    </div>
                   </div>
-                </aside>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div class="trial-view" data-frame-panel="frame_002" data-trial-panel="frame_002_trial_02">
+            <div class="trial-status">
+              <span>Trial 2</span>
+              <span>Generated by Qwen</span>
+              <strong>Risk 8 -> 2</strong>
+            </div>
+            <div class="demo-grid">
+              <div class="visual-stack">
+                <article class="panel camera-panel">
+                  <h3>Robot Camera Frame</h3>
+                  <img src="assets/frame_002_camera.jpg" alt="Frame 2 - standing person robot camera photo" />
+                </article>
+                <article class="panel local-panel">
+                  <h3>40x40 Local Semantic Costmap</h3>
+                  <img src="assets/trial_02_frame_002_local_costmap.png" alt="Local semantic costmap heatmap" />
+                </article>
+              </div>
+              <article class="panel map-panel">
+                <h3>T-Junction Demo Map with Baseline and Enhanced Paths</h3>
+                <img src="assets/trial_02_frame_002_global_costmap.png" alt="Global costmap path comparison" />
+              </article>
+              <aside class="panel insight-panel">
+                <h3>Metrics Comparison</h3>
+                <div class="metric-columns">
+                  <div>
+                    <h4>Baseline Planner</h4>
+
+    <dl class="metrics">
+      <div><dt>Path length</dt><dd>75.0</dd></div>
+      <div><dt>Average cost</dt><dd>16.34</dd></div>
+      <div><dt>Social violations</dt><dd>0</dd></div>
+      <div><dt>Risk score</dt><dd>8/100</dd></div>
+    </dl>
+
+                  </div>
+                  <div>
+                    <h4>VLM-Enhanced Planner</h4>
+
+    <dl class="metrics">
+      <div><dt>Path length</dt><dd>77.5</dd></div>
+      <div><dt>Average cost</dt><dd>4.66</dd></div>
+      <div><dt>Social violations</dt><dd>0</dd></div>
+      <div><dt>Risk score</dt><dd>2/100</dd></div>
+    </dl>
+
+                  </div>
+                </div>
+                <p class="summary">Risk reduction: 6 points. Slightly longer path, lower semantic risk.</p>
+                <div class="code-pair">
+                  <div>
+                    <h3>VLM Semantic JSON</h3>
+                    <pre>{
+  &quot;scene&quot;: &quot;A person standing in the middle of a hallway.&quot;,
+  &quot;objects&quot;: [
+    {
+      &quot;type&quot;: &quot;person&quot;,
+      &quot;image_position&quot;: &quot;center&quot;,
+      &quot;path_relation&quot;: &quot;away_from_path&quot;,
+      &quot;distance_estimate&quot;: &quot;medium&quot;,
+      &quot;motion_state&quot;: &quot;stationary&quot;,
+      &quot;mobility_class&quot;: &quot;static&quot;,
+      &quot;facing_direction&quot;: &quot;unknown&quot;,
+      &quot;social_radius&quot;: 1,
+      &quot;semantic_cost&quot;: 150,
+      &quot;reason&quot;: &quot;Person standing in the middle of the hallway.&quot;
+    }
+  ],
+  &quot;navigation_context_used&quot;: {
+    &quot;planned_path_direction&quot;: &quot;forward&quot;,
+    &quot;lidar_summary&quot;: &quot;front_left: clear, front_right: soft-return, right: clear&quot;,
+    &quot;depth_summary&quot;: &quot;standing_person_center: near&quot;
+  },
+  &quot;local_costmap_intent&quot;: [
+    {
+      &quot;shape&quot;: &quot;circle&quot;,
+      &quot;center&quot;: &quot;center&quot;,
+      &quot;distance_estimate&quot;: &quot;medium&quot;,
+      &quot;radius&quot;: 7,
+      &quot;mobility_class&quot;: &quot;static&quot;,
+      &quot;cost&quot;: 150
+    }
+  ],
+  &quot;navigation_advice&quot;: &quot;Continue forward, avoiding the person in the hallway.&quot;
+}</pre>
+                  </div>
+                  <div>
+                    <h3>Mock Navigation Context</h3>
+                    <pre>{
+  &quot;robot_pose&quot;: {
+    &quot;x&quot;: 52,
+    &quot;y&quot;: 66,
+    &quot;heading&quot;: &quot;north&quot;
+  },
+  &quot;local_waypoints&quot;: [
+    [
+      52,
+      62
+    ],
+    [
+      52,
+      52
+    ],
+    [
+      52,
+      42
+    ],
+    [
+      52,
+      30
+    ]
+  ],
+  &quot;planned_path_direction&quot;: &quot;forward&quot;,
+  &quot;mock_lidar&quot;: {
+    &quot;front&quot;: &quot;clear&quot;,
+    &quot;front_left&quot;: &quot;clear&quot;,
+    &quot;front_right&quot;: &quot;soft-return&quot;,
+    &quot;right&quot;: &quot;clear&quot;
+  },
+  &quot;mock_depth&quot;: {
+    &quot;near_objects&quot;: [
+      &quot;standing_person_center&quot;
+    ],
+    &quot;free_space&quot;: [
+      &quot;front_left&quot;,
+      &quot;front_right&quot;
+    ]
+  }
+}</pre>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div class="trial-view" data-frame-panel="frame_002" data-trial-panel="frame_002_trial_03">
+            <div class="trial-status">
+              <span>Trial 3</span>
+              <span>Generated by Qwen</span>
+              <strong>Risk 8 -> 2</strong>
+            </div>
+            <div class="demo-grid">
+              <div class="visual-stack">
+                <article class="panel camera-panel">
+                  <h3>Robot Camera Frame</h3>
+                  <img src="assets/frame_002_camera.jpg" alt="Frame 2 - standing person robot camera photo" />
+                </article>
+                <article class="panel local-panel">
+                  <h3>40x40 Local Semantic Costmap</h3>
+                  <img src="assets/trial_03_frame_002_local_costmap.png" alt="Local semantic costmap heatmap" />
+                </article>
+              </div>
+              <article class="panel map-panel">
+                <h3>T-Junction Demo Map with Baseline and Enhanced Paths</h3>
+                <img src="assets/trial_03_frame_002_global_costmap.png" alt="Global costmap path comparison" />
+              </article>
+              <aside class="panel insight-panel">
+                <h3>Metrics Comparison</h3>
+                <div class="metric-columns">
+                  <div>
+                    <h4>Baseline Planner</h4>
+
+    <dl class="metrics">
+      <div><dt>Path length</dt><dd>75.0</dd></div>
+      <div><dt>Average cost</dt><dd>16.34</dd></div>
+      <div><dt>Social violations</dt><dd>0</dd></div>
+      <div><dt>Risk score</dt><dd>8/100</dd></div>
+    </dl>
+
+                  </div>
+                  <div>
+                    <h4>VLM-Enhanced Planner</h4>
+
+    <dl class="metrics">
+      <div><dt>Path length</dt><dd>77.5</dd></div>
+      <div><dt>Average cost</dt><dd>4.66</dd></div>
+      <div><dt>Social violations</dt><dd>0</dd></div>
+      <div><dt>Risk score</dt><dd>2/100</dd></div>
+    </dl>
+
+                  </div>
+                </div>
+                <p class="summary">Risk reduction: 6 points. Slightly longer path, lower semantic risk.</p>
+                <div class="code-pair">
+                  <div>
+                    <h3>VLM Semantic JSON</h3>
+                    <pre>{
+  &quot;scene&quot;: &quot;A person standing in the middle of a hallway.&quot;,
+  &quot;objects&quot;: [
+    {
+      &quot;type&quot;: &quot;person&quot;,
+      &quot;image_position&quot;: &quot;center&quot;,
+      &quot;path_relation&quot;: &quot;away_from_path&quot;,
+      &quot;distance_estimate&quot;: &quot;medium&quot;,
+      &quot;motion_state&quot;: &quot;stationary&quot;,
+      &quot;mobility_class&quot;: &quot;static&quot;,
+      &quot;facing_direction&quot;: &quot;unknown&quot;,
+      &quot;social_radius&quot;: 1,
+      &quot;semantic_cost&quot;: 150,
+      &quot;reason&quot;: &quot;Person standing in the middle of the hallway.&quot;
+    }
+  ],
+  &quot;navigation_context_used&quot;: {
+    &quot;planned_path_direction&quot;: &quot;forward&quot;,
+    &quot;lidar_summary&quot;: &quot;front_left: clear, front_right: soft-return, right: clear&quot;,
+    &quot;depth_summary&quot;: &quot;standing_person_center: near&quot;
+  },
+  &quot;local_costmap_intent&quot;: [
+    {
+      &quot;shape&quot;: &quot;circle&quot;,
+      &quot;center&quot;: &quot;center&quot;,
+      &quot;distance_estimate&quot;: &quot;medium&quot;,
+      &quot;radius&quot;: 7,
+      &quot;mobility_class&quot;: &quot;static&quot;,
+      &quot;cost&quot;: 150
+    }
+  ],
+  &quot;navigation_advice&quot;: &quot;Continue forward, maintain a safe distance from the person.&quot;
+}</pre>
+                  </div>
+                  <div>
+                    <h3>Mock Navigation Context</h3>
+                    <pre>{
+  &quot;robot_pose&quot;: {
+    &quot;x&quot;: 52,
+    &quot;y&quot;: 66,
+    &quot;heading&quot;: &quot;north&quot;
+  },
+  &quot;local_waypoints&quot;: [
+    [
+      52,
+      62
+    ],
+    [
+      52,
+      52
+    ],
+    [
+      52,
+      42
+    ],
+    [
+      52,
+      30
+    ]
+  ],
+  &quot;planned_path_direction&quot;: &quot;forward&quot;,
+  &quot;mock_lidar&quot;: {
+    &quot;front&quot;: &quot;clear&quot;,
+    &quot;front_left&quot;: &quot;clear&quot;,
+    &quot;front_right&quot;: &quot;soft-return&quot;,
+    &quot;right&quot;: &quot;clear&quot;
+  },
+  &quot;mock_depth&quot;: {
+    &quot;near_objects&quot;: [
+      &quot;standing_person_center&quot;
+    ],
+    &quot;free_space&quot;: [
+      &quot;front_left&quot;,
+      &quot;front_right&quot;
+    ]
+  }
+}</pre>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
               </div>
             </section>
 
-
             <footer>
-              Generated by <code>generate_demo.py</code>. Replay mode is the default; real Qwen2.5-VL inference can be connected through <code>vlm_inference.py</code>.
+              Generated by <code>generate_demo.py</code>. Labels indicate whether each semantic JSON is curated replay, saved Qwen output, or live Qwen output.
             </footer>
           </main>
+          <script>
+            document.querySelectorAll('.trial-pill').forEach((button) => {
+              button.addEventListener('click', () => {
+                const frame = button.dataset.frameButton;
+                const target = button.dataset.trialTarget;
+                document.querySelectorAll(`[data-frame-button="${frame}"]`).forEach((item) => item.classList.toggle('active', item === button));
+                document.querySelectorAll(`[data-frame-panel="${frame}"]`).forEach((panel) => panel.classList.toggle('active', panel.dataset.trialPanel === target));
+              });
+            });
+          </script>
         </body>
         </html>

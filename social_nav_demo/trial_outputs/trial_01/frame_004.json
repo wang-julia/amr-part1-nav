@@ -1,0 +1,33 @@
+{
+  "scene": "A person standing near a doorway in a hallway.",
+  "objects": [
+    {
+      "type": "person",
+      "image_position": "center-right",
+      "path_relation": "away_from_path",
+      "distance_estimate": "medium",
+      "motion_state": "walking",
+      "mobility_class": "moving",
+      "facing_direction": "forward",
+      "social_radius": 2,
+      "semantic_cost": 150,
+      "reason": "Person is walking towards the doorway."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward",
+    "lidar_summary": "Front is clear, front left is unknown-gap, front right is soft-return, right is occupied",
+    "depth_summary": "Near objects are turning_point_center_left and standing_person_center_right, free space includes front and left corridor"
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center-right",
+      "distance_estimate": "medium",
+      "radius": 7,
+      "mobility_class": "moving",
+      "cost": 150
+    }
+  ],
+  "navigation_advice": "Stay to the left of the person to avoid potential collision."
+}

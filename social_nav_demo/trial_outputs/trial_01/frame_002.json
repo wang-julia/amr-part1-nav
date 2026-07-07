@@ -1,0 +1,33 @@
+{
+  "scene": "A person standing in the middle of a hallway.",
+  "objects": [
+    {
+      "type": "person",
+      "image_position": "center",
+      "path_relation": "away_from_path",
+      "distance_estimate": "medium",
+      "motion_state": "walking",
+      "mobility_class": "moving",
+      "facing_direction": "forward",
+      "social_radius": 1,
+      "semantic_cost": 150,
+      "reason": "The person is walking and appears to be moving towards the front of the hallway."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward",
+    "lidar_summary": "front_left: clear, front_right: soft-return, right: clear",
+    "depth_summary": "standing_person_center: near"
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center",
+      "distance_estimate": "medium",
+      "radius": 7,
+      "mobility_class": "moving",
+      "cost": 150
+    }
+  ],
+  "navigation_advice": "Continue forward, maintaining a safe distance from the person."
+}

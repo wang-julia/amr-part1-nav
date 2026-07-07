@@ -1,0 +1,65 @@
+{
+  "scene": "Corridor with doors and a fire exit sign.",
+  "objects": [
+    {
+      "type": "doorway",
+      "image_position": "center-right",
+      "path_relation": "away_from_path",
+      "distance_estimate": "medium",
+      "motion_state": "unknown",
+      "mobility_class": "static",
+      "facing_direction": "unknown",
+      "social_radius": 0,
+      "semantic_cost": 150,
+      "reason": "Doorway is clearly off to the side."
+    },
+    {
+      "type": "doorway",
+      "image_position": "center-left",
+      "path_relation": "away_from_path",
+      "distance_estimate": "medium",
+      "motion_state": "unknown",
+      "mobility_class": "static",
+      "facing_direction": "unknown",
+      "social_radius": 0,
+      "semantic_cost": 150,
+      "reason": "Doorway is clearly off to the side."
+    },
+    {
+      "type": "fire_exit_sign",
+      "image_position": "center-top",
+      "path_relation": "away_from_path",
+      "distance_estimate": "near",
+      "motion_state": "unknown",
+      "mobility_class": "static",
+      "facing_direction": "unknown",
+      "social_radius": 0,
+      "semantic_cost": 150,
+      "reason": "Fire exit sign is clearly off to the side."
+    }
+  ],
+  "navigation_context_used": {
+    "planned_path_direction": "forward",
+    "lidar_summary": "Clear front, front left, front right, right sectors.",
+    "depth_summary": "Near objects: none, Free space: front, front left, front right, right sectors."
+  },
+  "local_costmap_intent": [
+    {
+      "shape": "circle",
+      "center": "center",
+      "distance_estimate": "near",
+      "radius": 5,
+      "mobility_class": "static",
+      "cost": 100
+    },
+    {
+      "shape": "circle",
+      "center": "center",
+      "distance_estimate": "medium",
+      "radius": 8,
+      "mobility_class": "static",
+      "cost": 120
+    }
+  ],
+  "navigation_advice": "Continue straight ahead."
+}
