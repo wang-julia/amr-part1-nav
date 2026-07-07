@@ -20,12 +20,62 @@ sys.path.insert(0, str(ROOT))
 import matplotlib
 matplotlib.use("Agg")
 
+import numpy as np
+
+from local_costmap import semantic_json_to_local_costmap
 from mock_context import get_mock_context, get_timeline
-from simulator import build_demo_result
+from simulator import astar, calculate_path_metrics, build_demo_result
 
 OUT = ROOT / "live_demo.html"
 CAMERA_DIR = ROOT / "camera_photos"
 TRIAL_DIR  = ROOT / "trial_outputs" / "trial_03"
+
+# Forward and right unit vectors for each heading in global (x-right, y-down) coords
+_HEADING_DIRS = {
+    "north":      ((0, -1), (1,  0)),
+    "north-east": ((1, -1), (1,  1)),
+    "east":       ((1,  0), (0,  1)),
+    "south-east": ((1,  1), (-1, 1)),
+    "south":      ((0,  1), (-1, 0)),
+    "south-west": ((-1, 1), (-1,-1)),
+    "west":       ((-1, 0), (0, -1)),
+    "north-west": ((-1,-1), (1, -1)),
+}
+
+def _fuse_with_heading(base_costmap: np.ndarray, local_costmap: np.ndarray, robot_pose: dict) -> np.ndarray:
+    """Re-fuse the local costmap using the robot's actual heading direction."""
+    heading = robot_pose.get("heading", "north")
+    (fwd_dx, fwd_dy), (right_dx, right_dy) = _HEADING_DIRS.get(heading, _HEADING_DIRS["north"])
+    fwd_len = (fwd_dx**2 + fwd_dy**2) ** 0.5
+    right_len = (right_dx**2 + right_dy**2) ** 0.5
+    fwd_dx /= fwd_len;   fwd_dy /= fwd_len
+    right_dx /= right_len; right_dy /= right_len
+
+    robot_x, robot_y = int(robot_pose["x"]), int(robot_pose["y"])
+    local_size = local_costmap.shape[0]
+    robot_lx = local_size // 2          # 20
+    robot_ly = int(local_size * 0.9)    # 36
+
+    fused = base_costmap.copy()
+    h, w = fused.shape
+    OBSTACLE = 255
+
+    for ly in range(local_size):
+        for lx in range(local_size):
+            cost = int(local_costmap[ly, lx])
+            if cost <= 0:
+                continue
+            fwd_steps   = robot_ly - ly
+            right_steps = lx - robot_lx
+            gx = int(round(robot_x + fwd_steps * fwd_dx + right_steps * right_dx))
+            gy = int(round(robot_y + fwd_steps * fwd_dy + right_steps * right_dy))
+            if not (0 <= gx < w and 0 <= gy < h):
+                continue
+            if int(fused[gy, gx]) >= OBSTACLE:
+                continue
+            fused[gy, gx] = max(int(fused[gy, gx]), cost)
+
+    return fused
 
 # Extensions for real camera photos (frame_005 is .png, rest are .jpg)
 _EXTS = {"frame_005": ".png"}
@@ -48,6 +98,19 @@ def collect_frames() -> list:
         ctx = get_mock_context(fid)
         sem = _load_trial(fid)
         res = build_demo_result(sem, ctx)
+        heading = ctx["robot_pose"].get("heading", "north")
+        if heading not in ("north", "north-east"):
+            local_cm = semantic_json_to_local_costmap(sem)
+            enhanced = _fuse_with_heading(res["base_costmap"], local_cm, ctx["robot_pose"])
+            start, goal = res["start"], res["goal"]
+            baseline_path = astar(res["base_costmap"], start, goal)
+            enhanced_path = astar(enhanced, start, goal)
+            res = {**res,
+                   "enhanced_costmap": enhanced,
+                   "baseline_path": baseline_path,
+                   "enhanced_path": enhanced_path,
+                   "baseline_metrics": calculate_path_metrics(enhanced, baseline_path),
+                   "enhanced_metrics": calculate_path_metrics(enhanced, enhanced_path)}
         label = item["title"].split(" - ", 1)[1].title() if " - " in item["title"] else item["title"]
         frames.append({
             "frame_id": fid,
@@ -254,6 +317,8 @@ function paintCostmap(canvas, data, basemap, revealFrac) {
       rgb = [7, 11, 20];
     } else if (basemap && basemap[r][c] >= 255) {
       rgb = [230, 235, 255];
+    } else if (data[r][c] < 25) {
+      rgb = [7, 11, 20];
     } else {
       rgb = magmaRgb(data[r][c], 245);
     }

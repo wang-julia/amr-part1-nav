@@ -1,33 +1,11 @@
 {
-  "scene": "A well-lit hallway with white tiled floors and wooden doors.",
-  "objects": [
-    {
-      "type": "doorway",
-      "image_position": "center-right",
-      "path_relation": "away_from_path",
-      "distance_estimate": "medium",
-      "motion_state": "unknown",
-      "mobility_class": "static",
-      "facing_direction": "unknown",
-      "social_radius": 0,
-      "semantic_cost": 100,
-      "reason": "Doorway is clearly off to the side."
-    }
-  ],
+  "scene": "A well-lit hallway with white tiled floors and wooden doors. The corridor ahead is clear.",
+  "objects": [],
   "navigation_context_used": {
     "planned_path_direction": "forward",
     "lidar_summary": "Clear front, front left, front right, right sectors.",
     "depth_summary": "Near objects: none, Free space: front, front left, front right, right sectors."
   },
-  "local_costmap_intent": [
-    {
-      "shape": "circle",
-      "center": "center-right",
-      "distance_estimate": "medium",
-      "radius": 5,
-      "mobility_class": "static",
-      "cost": 100
-    }
-  ],
+  "local_costmap_intent": [],
   "navigation_advice": "Continue straight ahead."
 }
