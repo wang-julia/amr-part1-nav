@@ -1,0 +1,487 @@
+{
+  "batch_id": "four-core-trial-03-direction-cues",
+  "created_at": "2026-07-22T08:01:33.795635+00:00",
+  "model": "C:\\Users\\cthar\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-VL-3B-Instruct\\snapshots\\66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "temperature": 0.0,
+  "prompt": "Analyze only the real people visible in this robot-camera image.\n\nReturn exactly one valid JSON object with:\n- people_count: the integer number of visible real people\n- people: one object for every visible real person\n\nEvery person object must contain exactly:\n- person_id: integer, numbered from 1\n- motion: walking | standing | running\n- distance: close | mid | far\n- torso_direction: front | left | right | back | frontleft | frontright | backleft | backright\n- face_direction: front | left | right | back | frontleft | frontright | backleft | backright\n\nCamera-relative direction frame:\n- The camera always points front. Its optical/viewing direction goes from the camera into the image.\n- front means oriented in the same direction as the camera: away from the camera and deeper into the image.\n- back means oriented opposite the camera direction: toward the camera lens and robot.\n- left means oriented toward the left side of the image.\n- right means oriented toward the right side of the image.\n- Diagonal values combine the corresponding front/back and left/right components.\n- These labels describe where the person points, not which body surface the camera sees. A person looking directly at the camera points back, not front.\n\nRules:\n1. Silently scan the entire image and count every distinct visible real person. Count a partially visible person when enough of the body is visible to identify a person. Ignore reflections, posters, screens, mannequins, statues, and photographs of people. people_count must equal the number of objects in people. For an empty scene, return exactly {\"people_count\":0,\"people\":[]}.\n2. Classify motion only from visible body pose in this image. Use walking for a clear walking stride or stepping pose, running for a clear running pose with stronger stride or forward lean, and standing when neither walking nor running is visually supported. Do not infer motion from the filename, prompt, or surrounding scene.\n3. Estimate distance from the robot using apparent body size and floor position. Use close when a person occupies more than about 60% of image height or is cropped by an image edge, mid for about 30-60%, and far for less than about 30%.\n4. Determine torso_direction independently from the chest or back, shoulder line, hips, legs, and feet. If the chest/front of the body faces the camera, torso_direction is back. If the person's back faces the camera, torso_direction is front. A side profile pointing toward image-left is left; a side profile pointing toward image-right is right. Use diagonals when both depth and lateral components are visible.\n5. Determine face_direction independently from the nose, eyes, facial features, ears, head profile, and back of the head. A face looking at the camera is back. The back of a head pointing deeper into the image is front. A nose profile pointing toward image-left is left; a nose profile pointing toward image-right is right. Use diagonals when both depth and lateral components are visible.\n6. Do not copy torso_direction into face_direction automatically. The head may turn independently of the body. Silently make two separate visual decisions for every person, even when the final values happen to match.\n7. Use the camera-relative direction frame above for both direction fields. Choose the closest of the eight values for every person, including standing or partially occluded people. Both direction fields are mandatory and must never be null.\n8. Output only the requested JSON fields. Do not output positions, groups, confidence, costs, radii, explanations, scene text, advice, markdown, or prose.",
+  "completed": [
+    {
+      "history_id": "6a2197e9edb94998ad5e674b26bad705",
+      "filename": "01_empty_corridor.jpg",
+      "elapsed_seconds": 45.38,
+      "semantic_json": {
+        "people_count": 0,
+        "people": []
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 0,
+        "person_records": 0,
+        "complete_records": 0,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "66af8300835947b0a796e9d29380a9db",
+      "filename": "04_standing_center_near.jpg",
+      "elapsed_seconds": 10.36,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "3809506a12684a6886cfe5553765bc83",
+      "filename": "05_standing_right_near.jpg",
+      "elapsed_seconds": 9.78,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "996207709e044804907df5cf98b75470",
+      "filename": "06_standing_center_medium.jpg",
+      "elapsed_seconds": 9.52,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "8c47108e5444453798ad34c8749b902e",
+      "filename": "07_walking_center_medium.jpg",
+      "elapsed_seconds": 10.15,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "390d473aa9594b01a8ab23d3658a67be",
+      "filename": "08_walking_right_near.jpg",
+      "elapsed_seconds": 10.11,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "9b44fe74262a46d89a5975ed7849c3be",
+      "filename": "09_walking_center_far.jpg",
+      "elapsed_seconds": 9.79,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "0502028c335f4d508bd5fbee65049a16",
+      "filename": "11_three_people_walking.jpg",
+      "elapsed_seconds": 20.37,
+      "semantic_json": {
+        "people_count": 3,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "running",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 2,
+            "motion": "walking",
+            "distance": "far",
+            "torso_direction": "left",
+            "face_direction": "left"
+          },
+          {
+            "person_id": 3,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "right",
+            "face_direction": "right"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 3,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "07787571970f491289f8194778eb3584",
+      "filename": "13_group_standing_along_wall.jpg",
+      "elapsed_seconds": 37.14,
+      "semantic_json": {
+        "people_count": 6,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 2,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 3,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 4,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 5,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 6,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 6,
+        "person_records": 6,
+        "complete_records": 6,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "c0a875af88eb4a70ac9112ce5220d0d9",
+      "filename": "2_walking_mid_mid_towards.jpg",
+      "elapsed_seconds": 14.54,
+      "semantic_json": {
+        "people_count": 2,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 2,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 2,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "6f42e0bb80514b2b8385cc771dca2a5a",
+      "filename": "4_walking_mid_mid_towards.jpg",
+      "elapsed_seconds": 25.58,
+      "semantic_json": {
+        "people_count": 4,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 2,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 3,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 4,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 4,
+        "person_records": 4,
+        "complete_records": 4,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "f49285546d1f4d4984e51f0d6e7f9280",
+      "filename": "standing_far_right_left.webp",
+      "elapsed_seconds": 6.71,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "5fe59a3913ae4d61961e206e61703828",
+      "filename": "standing_mid_left.avif",
+      "elapsed_seconds": 6.66,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "9da828577589470e8c79186d52f250c4",
+      "filename": "walking_far_mid_towards.jpg",
+      "elapsed_seconds": 6.41,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "60b3249969994125a4933c2ff9c08294",
+      "filename": "walking_mid_left_front.jpg",
+      "elapsed_seconds": 6.33,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "b2f16a32f3b345569877fda762b7e874",
+      "filename": "walking_mid_mid_front.jpg",
+      "elapsed_seconds": 6.42,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "bff7e9b8b246467cadf1922a90b494d8",
+      "filename": "walking_mid_right_front.jpg",
+      "elapsed_seconds": 6.32,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    }
+  ],
+  "failures": []
+}

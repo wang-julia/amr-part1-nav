@@ -1,0 +1,415 @@
+{
+    "batch_id":  "folder-20260721T133016Z",
+    "created_at":  "2026-07-21T13:34:09.965120+00:00",
+    "model":  "Qwen/Qwen2.5-VL-3B-Instruct",
+    "temperature":  0.0,
+    "prompt":  "Analyze only the real people visible in this cart-camera image.\n\nReturn exactly one valid JSON object with these root fields:\n- people_count: integer number of visible real people\n- people: one object per visible person\n\nEvery person object must contain exactly:\n- person_id: integer, numbered from 1\n- side: left | center | right\n- distance: close | mid | far\n- motion: moving | standing\n- direction: front | left | right | back | frontleft | frontright | backleft | backright when moving; null when standing\n- group_id: positive integer shared by at least two visibly grouped people; otherwise null\n\nRules:\n1. First silently scan the full image from left to right and count every distinct visible head-and-torso pair. Ignore reflections, posters, screens, mannequins, and statues. people_count must equal the length of people. Do not invent sample or placeholder people. For an empty scene, return exactly {\"people_count\":0,\"people\":[]}.\n2. The camera faces the cart\u0027s forward direction. The thin cyan vertical line is an artificial center guide, not an object. Use torso center: left of the central 20% is left, inside the central 20% is center, and right of it is right. Do not mirror the image.\n3. Estimate apparent distance from visible body height and floor contact: close is over 60% of image height or cropped by an image edge; mid is 30-60%; far is under 30%.\n4. Use moving only with visible motion evidence such as a stride, lifted foot, or walking posture. Otherwise use standing. Do not infer motion from the filename, scene, or prompt.\n5. Direction is relative to the cart: front means away from the camera, back means toward the camera, left and right mean across the image, and diagonal values combine those components. Use body and foot orientation. A standing person must have direction null.\n6. Assign the same group_id only to at least two people visibly walking together, standing together, or interacting. A person alone must have group_id null. Nearby people without clear grouping also receive null. Start valid group IDs at 1.\n7. Output only the requested JSON fields. Do not output costs, radii, explanations, scene text, advice, markdown, or any prose.",
+    "completed":  [
+                      {
+                          "history_id":  "aef8b82d16d048cf970ffdaa70fb04d3",
+                          "filename":  "01_empty_corridor.jpg",
+                          "elapsed_seconds":  30.15,
+                          "semantic_json":  {
+                                                "people_count":  0,
+                                                "people":  [
+
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "1d8df299ff474d679ec9379a580324bd",
+                          "filename":  "04_standing_center_near.jpg",
+                          "elapsed_seconds":  8.94,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "a32782cfd5524c058dcf4bca1094dff5",
+                          "filename":  "05_standing_right_near.jpg",
+                          "elapsed_seconds":  8.88,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "5a5d72c4c2f54e78a68cbc8a7f491795",
+                          "filename":  "06_standing_center_medium.jpg",
+                          "elapsed_seconds":  9.14,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "ab8f0610c61d426097adf882b47a700d",
+                          "filename":  "07_walking_center_medium.jpg",
+                          "elapsed_seconds":  8.84,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "front",
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "148326d045d248d38c42fcfced0fc9c9",
+                          "filename":  "08_walking_right_near.jpg",
+                          "elapsed_seconds":  8.5,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "right",
+                                                                   "distance":  "far",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "196451b34c9245369cdc9d3f2c41c8d8",
+                          "filename":  "09_walking_center_far.jpg",
+                          "elapsed_seconds":  8.48,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "front",
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "a3fed0ab7a854833b53e25e855972710",
+                          "filename":  "11_three_people_walking.jpg",
+                          "elapsed_seconds":  19.95,
+                          "semantic_json":  {
+                                                "people_count":  3,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "left",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "front",
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  2,
+                                                                   "side":  "center",
+                                                                   "distance":  "far",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  null
+                                                               },
+                                                               {
+                                                                   "person_id":  3,
+                                                                   "side":  "right",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "back",
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "f02d2ba340554065a74978a77d6a814b",
+                          "filename":  "2_walking_mid_mid_towards.jpg",
+                          "elapsed_seconds":  13.77,
+                          "semantic_json":  {
+                                                "people_count":  2,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "left",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  2,
+                                                                   "side":  "right",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "82399fedf92d49f7a7a5e2e727098697",
+                          "filename":  "4_walking_mid_mid_towards.jpg",
+                          "elapsed_seconds":  23.99,
+                          "semantic_json":  {
+                                                "people_count":  4,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "front",
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  2,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "front",
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  3,
+                                                                   "side":  "right",
+                                                                   "distance":  "far",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  null
+                                                               },
+                                                               {
+                                                                   "person_id":  4,
+                                                                   "side":  "right",
+                                                                   "distance":  "far",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  null
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "afd98bf9dc3c491ab71a9a40294229b3",
+                          "filename":  "standing_far_right_left.webp",
+                          "elapsed_seconds":  8.54,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "edc713a2bc764853a1fead93a36e3e67",
+                          "filename":  "standing_mid_left.avif",
+                          "elapsed_seconds":  8.91,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "b2b70870807e43d0b323b04562ddcf45",
+                          "filename":  "walking_far_mid_towards.jpg",
+                          "elapsed_seconds":  9.39,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "4af0496e2f6a4ec786730ae416726558",
+                          "filename":  "walking_mid_left_front.jpg",
+                          "elapsed_seconds":  9.04,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "7af3ad15b06847fb884b1a4dcd9c6706",
+                          "filename":  "walking_mid_mid_front.jpg",
+                          "elapsed_seconds":  9.19,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "da616a69da4f42c698be530ceaf347ca",
+                          "filename":  "walking_mid_right_front.jpg",
+                          "elapsed_seconds":  8.2,
+                          "semantic_json":  {
+                                                "people_count":  1,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "moving",
+                                                                   "direction":  "right",
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      },
+                      {
+                          "history_id":  "726bf9aef08b4c1b889c0f7d42531fec",
+                          "filename":  "13_group_standing_along_wall.jpg",
+                          "elapsed_seconds":  69.86,
+                          "semantic_json":  {
+                                                "people_count":  8,
+                                                "people":  [
+                                                               {
+                                                                   "person_id":  1,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  2,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  3,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  4,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  5,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  6,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  7,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               },
+                                                               {
+                                                                   "person_id":  8,
+                                                                   "side":  "center",
+                                                                   "distance":  "mid",
+                                                                   "motion":  "standing",
+                                                                   "direction":  null,
+                                                                   "group_id":  1
+                                                               }
+                                                           ]
+                                            }
+                      }
+                  ],
+    "failures":  [
+
+                 ]
+}

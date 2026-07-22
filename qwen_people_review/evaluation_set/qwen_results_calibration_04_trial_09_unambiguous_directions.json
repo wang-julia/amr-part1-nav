@@ -1,0 +1,34 @@
+{
+  "batch_id": "calibration-04-trial-09-unambiguous-directions",
+  "created_at": "2026-07-22T08:26:10.246644+00:00",
+  "model": "C:\\Users\\cthar\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-VL-3B-Instruct\\snapshots\\66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "temperature": 0.0,
+  "prompt": "Inspect the robot-camera image and return only valid JSON.\n\nRequired root fields: people_count, people.\nRequired fields for every person: person_id, motion, distance, torso_direction, face_direction.\nAllowed motion: walking, standing, running. Allowed distance: close, mid, far. Allowed directions: front, left, right, back, frontleft, frontright, backleft, backright.\n\nCreate one people record per visible real person. people_count must equal the number of records. Ignore reflections, posters, screens, mannequins, and statues. For no people, return {\"people_count\":0,\"people\":[]}.\n\nMotion:\n- walking: visible step or walking stride\n- running: clear running stride or strong forward lean\n- standing: no visible walking or running evidence\n\nDistance:\n- close: body is cropped by an image edge, legs/feet continue below the bottom edge, or estimated full-body height is over 55% of the image\n- mid: most or all of the body fits and estimated height is 25-55%\n- far: complete person is under 25%\n\nDirections use the camera viewing direction, not the visible body surface:\n- front: points with the camera, away from the lens and deeper into the image\n- back: points against the camera direction, toward the lens and robot\n- left/right: points toward image-left/image-right\n- diagonals combine depth and lateral direction\n- `front` never means that the front of the body is visible; it means the person's direction arrow points away from the camera\n\nTorso decision:\n- visible chest/front of body facing the camera -> back\n- visible back of body facing the camera -> front\n- camera-facing chest also pointing image-left/image-right -> backleft/backright\n\nFace decision:\n- visible face looking at camera -> back\n- camera-facing face turned image-left/image-right -> backleft/backright\n- back of head facing camera -> front\n- pure nose profile toward image-left/image-right -> left/right\n\nAnatomical consistency:\n- a person's face may turn relative to the torso, but the two directions must be no more than 90 degrees apart\n- never pair front with back, frontleft with backright, or frontright with backleft\n- if cues conflict, determine the torso from the visible chest or back first, then choose the nearest face direction consistent with the visible eyes, nose, and head turn\n- example: visible chest toward the camera with the face turned toward image-left -> torso back, face backleft\n\nMandatory final checks:\n- if the chest is visible, torso_direction must be back, backleft, or backright, never front\n- if the eyes, nose, and front of the face are visible, face_direction must be back, backleft, or backright, never front\n- a body cropped by an image edge is close even when its visible portion seems medium-sized\n- torso_direction and face_direction must be no more than 90 degrees apart\n\nDecide torso and face separately, then run all final checks before returning JSON. Both directions are mandatory, including for standing people. Do not use the filename. Do not add fields, explanations, markdown, or prose.",
+  "completed": [
+    {
+      "history_id": "c7745fb8503b46f7a45b0d02f937de63",
+      "filename": "04_standing_center_near.jpg",
+      "elapsed_seconds": 42.25,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    }
+  ],
+  "failures": []
+}

@@ -1,0 +1,34 @@
+{
+  "batch_id": "calibration-04-trial-04",
+  "created_at": "2026-07-22T08:11:41.245689+00:00",
+  "model": "C:\\Users\\cthar\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-VL-3B-Instruct\\snapshots\\66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "temperature": 0.0,
+  "prompt": "Analyze only the real people visible in this robot-camera image.\n\nReturn exactly one valid JSON object with:\n- people_count: the integer number of visible real people\n- people: one object for every visible real person\n\nEvery person object must contain exactly:\n- person_id: integer, numbered from 1\n- motion: walking | standing | running\n- distance: close | mid | far\n- torso_direction: front | left | right | back | frontleft | frontright | backleft | backright\n- face_direction: front | left | right | back | frontleft | frontright | backleft | backright\n\nCamera-relative direction frame:\n- The camera always points front. Its optical/viewing direction goes from the camera into the image.\n- front means oriented in the same direction as the camera: away from the camera and deeper into the image.\n- back means oriented opposite the camera direction: toward the camera lens and robot.\n- left means oriented toward the left side of the image.\n- right means oriented toward the right side of the image.\n- Diagonal values combine the corresponding front/back and left/right components.\n- These labels describe where the person points, not which body surface the camera sees. A person looking directly at the camera points back, not front.\n\nRules:\n1. Silently scan the entire image and count every distinct visible real person. Count a partially visible person when enough of the body is visible to identify a person. Ignore reflections, posters, screens, mannequins, statues, and photographs of people. people_count must equal the number of objects in people. For an empty scene, return exactly {\"people_count\":0,\"people\":[]}.\n2. Classify motion only from visible body pose in this image. Use walking for a clear walking stride or stepping pose, running for a clear running pose with stronger stride or forward lean, and standing when neither walking nor running is visually supported. Do not infer motion from the filename, prompt, or surrounding scene.\n3. Estimate distance from the robot using apparent body size and cropping, in this priority order. Use close when the person is so large that the body is cropped by the top, bottom, or side of the image, or when the estimated full body would occupy more than about 55% of image height. Cropping is a close cue even when the visible fragment itself is shorter. Use mid when most or all of the body fits and its estimated height is about 25-55%. Use far when the complete person is small, below about 25% of image height.\n4. Determine torso_direction independently from the chest or back, shoulder line, hips, legs, and feet. If the chest/front of the body is visible and points generally toward the camera, torso_direction is back. Never label this front merely because the front surface of the torso is visible. If the person's back surface is visible and points deeper into the image, torso_direction is front. A side profile pointing toward image-left is left; a side profile pointing toward image-right is right. Use backleft or backright when the chest faces generally toward the camera but the torso also points toward image-left or image-right. Use frontleft or frontright when the back faces generally toward the camera but the body also points laterally.\n5. Determine face_direction independently from the nose, eyes, facial features, ears, head profile, and back of the head. A visible face looking directly at the camera is back. A visible face looking generally toward the camera while the nose and eyes turn toward image-left is backleft; the corresponding turn toward image-right is backright. The back of a head pointing deeper into the image is front. A pure side profile with the nose pointing toward image-left is left; a pure side profile with the nose pointing toward image-right is right. Use frontleft or frontright only when the back of the head is visible and it also turns laterally.\n6. Do not copy torso_direction into face_direction automatically. The head may turn independently of the body. Silently make two separate visual decisions for every person, even when the final values happen to match.\n7. Use the camera-relative direction frame above for both direction fields. Choose the closest of the eight values for every person, including standing or partially occluded people. Both direction fields are mandatory and must never be null.\n8. Output only the requested JSON fields. Do not output positions, groups, confidence, costs, radii, explanations, scene text, advice, markdown, or prose.\n\nFinal visual checks before returning JSON:\n- A large person cropped by the frame must be close.\n- Visible chest facing the camera must map to torso_direction back or a back diagonal.\n- Visible face toward the camera must map to face_direction back or a back diagonal.\n- A camera-facing face turned toward image-left must map to backleft; turned toward image-right must map to backright.",
+  "completed": [
+    {
+      "history_id": "5211dba739cb49a2b817d483d1743ae1",
+      "filename": "04_standing_center_near.jpg",
+      "elapsed_seconds": 33.75,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "mid",
+            "torso_direction": "front",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    }
+  ],
+  "failures": []
+}

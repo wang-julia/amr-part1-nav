@@ -1,0 +1,5 @@
+transformers>=4.51
+accelerate
+bitsandbytes>=0.49
+qwen-vl-utils
+pillow

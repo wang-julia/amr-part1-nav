@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qwen Core Review</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080c12;
+      --panel: #101722;
+      --panel-2: #151e2c;
+      --line: #293649;
+      --text: #edf3f8;
+      --muted: #93a7bb;
+      --accent: #42d1c4;
+      --accent-dark: #0e3735;
+      --warn: #f1c75b;
+      --danger: #ff7785;
+      --success: #65d58b;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 15px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    .hidden { display: none !important; }
+    header { position: sticky; top: 0; z-index: 5; min-height: 56px; display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); background: rgba(8, 12, 18, .96); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; white-space: nowrap; }
+    .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 5px; background: var(--accent); color: #031110; font-weight: 900; }
+    nav { display: flex; align-self: stretch; }
+    .nav-button { padding: 0 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+    .nav-button.active { color: var(--text); border-bottom-color: var(--accent); }
+    .runtime { margin-left: auto; color: var(--muted); font-size: 13px; text-align: right; }
+    main { width: min(1500px, calc(100% - 32px)); margin: 18px auto 36px; }
+    .panel { border: 1px solid var(--line); border-radius: 7px; background: var(--panel); overflow: hidden; }
+    .section-title { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 15px; border-bottom: 1px solid var(--line); }
+    h1, h2, p { margin: 0; }
+    h1 { font-size: 18px; }
+    h2 { font-size: 15px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .input-grid { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(420px, 1.2fr); gap: 12px; }
+    .drop-zone { min-height: 355px; display: grid; place-items: center; position: relative; cursor: pointer; background: #060a10; }
+    .drop-zone.dragging { outline: 2px solid var(--accent); outline-offset: -6px; }
+    .drop-empty { text-align: center; color: var(--muted); }
+    .drop-empty strong { display: block; color: var(--text); font-size: 18px; margin-bottom: 5px; }
+    #preview { display: none; width: 100%; height: 355px; object-fit: contain; }
+    .filebar { min-height: 49px; display: flex; align-items: center; gap: 10px; padding: 8px 13px; border-top: 1px solid var(--line); }
+    .filebar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+    textarea { width: 100%; resize: vertical; border: 0; outline: 0; background: #090f18; color: #dbe9f4; font: 13px/1.5 Consolas, monospace; letter-spacing: 0; }
+    #prompt { height: 404px; min-height: 250px; padding: 15px; }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+    .status { min-width: 0; flex: 1; color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .slider { display: flex; align-items: center; gap: 9px; color: var(--muted); white-space: nowrap; }
+    input[type="range"] { accent-color: var(--accent); }
+    .button { min-height: 38px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); cursor: pointer; font-weight: 700; }
+    .button:hover:not(:disabled) { border-color: #4b627e; }
+    .button.primary { border-color: #2e9b92; background: #287e77; color: #f4ffff; }
+    .button.danger { color: var(--danger); }
+    .button:disabled { cursor: not-allowed; opacity: .45; }
+    .results-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+    .trial-tab { width: 145px; min-height: 48px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); text-align: left; cursor: pointer; }
+    .trial-tab strong, .trial-tab span { display: block; }
+    .trial-tab span { color: var(--muted); font-size: 12px; }
+    .trial-tab.active { border-color: var(--accent); background: var(--accent-dark); }
+    .results-actions { margin-left: auto; display: flex; gap: 8px; }
+    .result-body { min-height: 410px; display: grid; grid-template-columns: minmax(420px, 1.05fr) minmax(380px, .95fr); }
+    .result-column { min-width: 0; }
+    .result-column + .result-column { border-left: 1px solid var(--line); }
+    .result-placeholder { min-height: 410px; display: grid; place-items: center; color: var(--muted); text-align: center; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .metric { padding: 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); }
+    .metric span, .metric strong { display: block; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .metric strong { margin-top: 3px; font-size: 19px; }
+    .validation { padding: 12px 15px; border-bottom: 1px solid var(--line); }
+    .validation.good { color: var(--success); }
+    .validation.bad { color: var(--danger); }
+    .validation ul { margin: 7px 0 0; padding-left: 20px; }
+    #peopleTable, #historyPeople { overflow-x: auto; }
+    .people-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    .people-table th, .people-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); text-align: left; }
+    .people-table th { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .empty-table { padding: 42px 15px; color: var(--muted); text-align: center; }
+    .json-box { height: 357px; min-height: 280px; padding: 14px; resize: none; }
+    .history-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); min-height: calc(100vh - 112px); }
+    .history-sidebar { border-right: 1px solid var(--line); }
+    .history-list { max-height: calc(100vh - 166px); overflow-y: auto; }
+    .history-item { width: 100%; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; }
+    .history-item:hover, .history-item.active { background: var(--panel-2); }
+    .history-item.active { box-shadow: inset 3px 0 var(--accent); }
+    .history-thumb { width: 58px; height: 58px; object-fit: cover; border-radius: 4px; background: #05080e; }
+    .history-item strong, .history-item span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item span { color: var(--muted); font-size: 12px; }
+    .history-detail { min-width: 0; }
+    .history-placeholder { min-height: 600px; display: grid; place-items: center; color: var(--muted); text-align: center; }
+    .history-content { padding: 14px; }
+    .history-grid { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(420px, 1.2fr); gap: 12px; }
+    .history-image { width: 100%; height: 360px; object-fit: contain; background: #05080e; }
+    .history-json { height: 360px; padding: 14px; resize: none; }
+    .history-table { margin-top: 12px; }
+    .prompt-history { margin-top: 12px; }
+    .prompt-history textarea { height: 285px; padding: 14px; resize: vertical; }
+    @media (max-width: 920px) {
+      main { width: min(100% - 18px, 760px); }
+      .input-grid, .result-body, .history-grid, .history-layout { grid-template-columns: 1fr; }
+      .result-column + .result-column, .history-sidebar { border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
+      .history-list { max-height: 320px; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .slider { justify-content: space-between; }
+      .results-head { flex-wrap: wrap; }
+      .trial-tab { flex: 1 1 120px; }
+      .results-actions { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="brand-mark">Q</span><span>Qwen Core Review</span></div>
+    <nav><button class="nav-button active" id="reviewNav">Review</button><button class="nav-button" id="historyNav">History</button></nav>
+    <div class="runtime" id="runtime">Checking Qwen runtime...</div>
+  </header>
+
+  <main>
+    <section id="reviewView">
+      <div class="input-grid">
+        <div class="panel">
+          <div class="section-title"><h1>Input Image</h1><span class="muted">Shared by three independent runs</span></div>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/bmp,image/avif" hidden>
+            <div class="drop-empty" id="dropEmpty"><strong>Select a robot-camera image</strong><span>JPEG, PNG, WebP, BMP, or AVIF</span></div>
+            <img id="preview" alt="Selected robot-camera frame">
+          </div>
+          <div class="filebar"><button class="button" id="clearImage" disabled>Clear</button><span id="fileMeta">No image selected</span></div>
+        </div>
+        <div class="panel">
+          <div class="section-title"><h1>Qwen Prompt</h1><span class="muted">Editable before generation</span></div>
+          <textarea id="prompt" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="status" id="status">Select an image to begin.</div>
+        <label class="slider">Variation <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.25"><strong id="temperatureValue">0.25</strong></label>
+        <button class="button primary" id="runAll" disabled>Generate 3 results</button>
+      </div>
+
+      <div class="panel">
+        <div class="results-head">
+          <button class="trial-tab active" data-trial="0"><strong>Result 1</strong><span>Waiting</span></button>
+          <button class="trial-tab" data-trial="1"><strong>Result 2</strong><span>Waiting</span></button>
+          <button class="trial-tab" data-trial="2"><strong>Result 3</strong><span>Waiting</span></button>
+          <div class="results-actions"><button class="button" id="downloadOne" disabled>Download JSON</button><button class="button" id="downloadAll" disabled>Download all</button></div>
+        </div>
+        <div class="result-placeholder" id="resultPlaceholder"><div><strong>No result selected</strong><br>Generated trials appear here.</div></div>
+        <div class="result-body hidden" id="resultBody">
+          <div class="result-column">
+            <div class="section-title"><h2>Core Observations</h2><span class="muted" id="trialMeta"></span></div>
+            <div class="metrics" id="metrics"></div>
+            <div class="validation" id="validation"></div>
+            <div id="peopleTable"></div>
+          </div>
+          <div class="result-column">
+            <div class="section-title"><h2>Raw Qwen JSON</h2><span class="muted">Unmodified model fields</span></div>
+            <textarea class="json-box" id="jsonOutput" readonly spellcheck="false"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="historyView">
+      <div class="history-layout">
+        <aside class="history-sidebar">
+          <div class="section-title"><div><h1>History</h1><span class="muted" id="historyCount">0 saved</span></div><button class="button" id="refreshHistory">Refresh</button></div>
+          <div class="history-list" id="historyList"></div>
+          <div class="filebar"><button class="button danger" id="clearHistory">Clear history</button></div>
+        </aside>
+        <div class="history-detail">
+          <div class="history-placeholder" id="historyPlaceholder"><div><strong>Select a saved result</strong><br>Its image, core observations, JSON, and exact prompt will appear here.</div></div>
+          <div class="hidden" id="historyContent">
+            <div class="section-title"><div><h1 id="historyTitle">Saved result</h1><span class="muted" id="historyMeta"></span></div><button class="button" id="downloadHistory">Download record</button></div>
+            <div class="history-content">
+              <div class="history-grid">
+                <div class="panel"><div class="section-title"><h2>Source Image</h2><span class="muted" id="historyFilename"></span></div><img class="history-image" id="historyImage" alt="Saved source image"></div>
+                <div class="panel"><div class="section-title"><h2>Raw Qwen JSON</h2><span class="muted">Saved model response</span></div><textarea class="history-json" id="historyJson" readonly></textarea></div>
+              </div>
+              <div class="panel history-table"><div class="section-title"><h2>Core Observations</h2><span class="muted" id="historyValidationLabel"></span></div><div id="historyMetrics"></div><div id="historyValidation"></div><div id="historyPeople"></div></div>
+              <div class="panel prompt-history"><div class="section-title"><h2>Exact Prompt Used</h2><span class="muted">Includes any appended context and output instruction</span></div><textarea id="historyPrompt" readonly></textarea></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    const state = { file: null, imageBase64: "", active: 0, history: [], activeHistory: null, historyRecord: null, running: false };
+    const trials = Array.from({ length: 3 }, (_, index) => ({ index, status: "Waiting", semanticJson: null, evaluation: null, effectivePrompt: "", seed: null, elapsed: null, historyId: null, error: null }));
+
+    function statusText(message, error = false) {
+      $("status").textContent = message;
+      $("status").classList.toggle("error", error);
+    }
+
+    function switchView(name) {
+      const history = name === "history";
+      $("reviewView").classList.toggle("hidden", history);
+      $("historyView").classList.toggle("hidden", !history);
+      $("reviewNav").classList.toggle("active", !history);
+      $("historyNav").classList.toggle("active", history);
+      if (history) loadHistory(!state.activeHistory).catch((error) => alert(error.message));
+    }
+
+    function renderEvaluation(targetId, evaluation, validationId = "") {
+      const current = evaluation || { valid: false, issues: ["No schema evaluation was saved for this result."] };
+      const issues = Array.isArray(current.issues) ? current.issues : [];
+      if (validationId) $(validationId).textContent = current.valid ? "Schema complete" : `${issues.length} schema issue${issues.length === 1 ? "" : "s"}`;
+      const target = $(targetId);
+      target.className = `validation ${current.valid ? "good" : "bad"}`;
+      target.innerHTML = current.valid
+        ? '<strong>Schema complete</strong> - motion, distance, torso direction, and face direction are present for every person.'
+        : `<strong>Check this response</strong>${issues.length ? `<ul>${issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}</ul>` : ""}`;
+    }
+
+    function metricCellsHtml(json, evaluation) {
+      return `<div class="metric"><span>Reported people</span><strong>${escapeHtml(json?.people_count ?? "-")}</strong></div><div class="metric"><span>Person records</span><strong>${escapeHtml(evaluation?.person_records ?? 0)}</strong></div><div class="metric"><span>Complete records</span><strong>${escapeHtml(evaluation?.complete_records ?? 0)}</strong></div>`;
+    }
+
+    function peopleHtml(json) {
+      const people = Array.isArray(json?.people) ? json.people : [];
+      if (!people.length) return '<div class="empty-table">No person records returned.</div>';
+      return `<table class="people-table"><thead><tr><th>Person</th><th>Motion</th><th>Distance</th><th>Torso direction</th><th>Face direction</th></tr></thead><tbody>${people.map((person, index) => `<tr><td>${escapeHtml(person?.person_id ?? index + 1)}</td><td>${escapeHtml(person?.motion ?? "missing")}</td><td>${escapeHtml(person?.distance ?? "missing")}</td><td>${escapeHtml(person?.torso_direction ?? "missing")}</td><td>${escapeHtml(person?.face_direction ?? "missing")}</td></tr>`).join("")}</tbody></table>`;
+    }
+
+    function renderTabs() {
+      document.querySelectorAll(".trial-tab").forEach((button, index) => {
+        button.classList.toggle("active", index === state.active);
+        button.querySelector("span").textContent = trials[index].status;
+      });
+    }
+
+    function renderTrial() {
+      renderTabs();
+      const trial = trials[state.active];
+      const ready = !!trial.semanticJson;
+      $("resultPlaceholder").classList.toggle("hidden", ready);
+      $("resultBody").classList.toggle("hidden", !ready);
+      $("downloadOne").disabled = !ready;
+      $("downloadAll").disabled = !trials.some((item) => item.semanticJson);
+      if (!ready) {
+        $("resultPlaceholder").innerHTML = trial.error ? `<div><strong>Result failed</strong><br>${escapeHtml(trial.error)}</div>` : '<div><strong>No result selected</strong><br>Generated trials appear here.</div>';
+        return;
+      }
+      $("trialMeta").textContent = `${trial.elapsed}s | seed ${trial.seed}`;
+      $("metrics").innerHTML = metricCellsHtml(trial.semanticJson, trial.evaluation);
+      renderEvaluation("validation", trial.evaluation);
+      $("peopleTable").innerHTML = peopleHtml(trial.semanticJson);
+      $("jsonOutput").value = JSON.stringify(trial.semanticJson, null, 2);
+    }
+
+    function resetTrials() {
+      trials.forEach((trial) => Object.assign(trial, { status: "Waiting", semanticJson: null, evaluation: null, effectivePrompt: "", seed: null, elapsed: null, historyId: null, error: null }));
+      state.active = 0;
+      renderTrial();
+    }
+
+    async function runTrial(trial, batchId) {
+      trial.status = "Running";
+      renderTabs();
+      const seed = Math.floor(Math.random() * 2147483646) + 1;
+      const response = await fetch("/api/infer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename: state.file.name, image_base64: state.imageBase64, prompt: $("prompt").value, context: {}, temperature: Number($("temperature").value), seed, batch_id: batchId, trial_index: trial.index + 1 }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Qwen inference failed.");
+      Object.assign(trial, { status: data.evaluation?.valid ? "Complete" : "Review", semanticJson: data.semantic_json, evaluation: data.evaluation, effectivePrompt: data.effective_prompt, seed: data.seed, elapsed: data.elapsed_seconds, historyId: data.history_id });
+    }
+
+    async function runAll() {
+      if (!state.file || state.running) return;
+      state.running = true;
+      resetTrials();
+      $("runAll").disabled = true;
+      statusText("Qwen is generating three independent results...");
+      const batchId = `web-${Date.now()}`;
+      for (const trial of trials) {
+        state.active = trial.index;
+        renderTrial();
+        try { await runTrial(trial, batchId); }
+        catch (error) { trial.status = "Failed"; trial.error = error.message; }
+        renderTrial();
+      }
+      state.running = false;
+      $("runAll").disabled = false;
+      const completed = trials.filter((trial) => trial.semanticJson).length;
+      statusText(`${completed} of 3 results completed and saved to History.`, completed !== 3);
+    }
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith("image/")) return statusText("Choose a supported image file.", true);
+      if (file.size > 20 * 1024 * 1024) return statusText("The image must be 20 MB or smaller.", true);
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.file = file;
+        state.imageBase64 = reader.result;
+        $("preview").src = reader.result;
+        $("preview").style.display = "block";
+        $("dropEmpty").style.display = "none";
+        $("fileMeta").textContent = `${file.name} | ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        $("clearImage").disabled = false;
+        $("runAll").disabled = false;
+        resetTrials();
+        statusText("Image ready.");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      state.file = null;
+      state.imageBase64 = "";
+      $("fileInput").value = "";
+      $("preview").removeAttribute("src");
+      $("preview").style.display = "none";
+      $("dropEmpty").style.display = "block";
+      $("fileMeta").textContent = "No image selected";
+      $("clearImage").disabled = true;
+      $("runAll").disabled = true;
+      resetTrials();
+      statusText("Select an image to begin.");
+    }
+
+    function downloadJson(value, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? "Unknown time" : date.toLocaleString();
+    }
+
+    function renderHistoryList() {
+      $("historyCount").textContent = `${state.history.length} saved`;
+      if (!state.history.length) {
+        $("historyList").innerHTML = '<div class="history-placeholder"><div><strong>No saved results</strong><br>Generate a result or run evaluate_folder.py.</div></div>';
+        $("historyPlaceholder").classList.remove("hidden");
+        $("historyContent").classList.add("hidden");
+        return;
+      }
+      $("historyList").innerHTML = state.history.map((run) => `<button class="history-item${run.id === state.activeHistory ? " active" : ""}" data-id="${run.id}"><img class="history-thumb" src="${run.image_url}" alt=""><span><strong>${escapeHtml(run.filename)}</strong><span>${escapeHtml(run.batch_id)} | ${escapeHtml(run.people_count)} people</span><span>${run.schema_valid ? "Schema complete" : `${run.issue_count} issues`} | ${escapeHtml(formatDate(run.created_at))}</span></span></button>`).join("");
+      document.querySelectorAll(".history-item").forEach((button) => button.addEventListener("click", () => loadHistoryDetail(button.dataset.id)));
+    }
+
+    async function loadHistory(selectNewest = false) {
+      const response = await fetch("/api/history", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not load history.");
+      state.history = data.runs || [];
+      renderHistoryList();
+      if (state.history.length && (selectNewest || !state.activeHistory)) await loadHistoryDetail(state.history[0].id);
+    }
+
+    async function loadHistoryDetail(runId) {
+      const response = await fetch(`/api/history/${runId}`, { cache: "no-store" });
+      const run = await response.json();
+      if (!response.ok) throw new Error(run.error || "Could not load the saved result.");
+      state.activeHistory = runId;
+      state.historyRecord = run;
+      renderHistoryList();
+      $("historyPlaceholder").classList.add("hidden");
+      $("historyContent").classList.remove("hidden");
+      $("historyTitle").textContent = `Trial ${run.trial_index} | ${run.filename}`;
+      $("historyMeta").textContent = `${run.batch_id} | ${formatDate(run.created_at)} | ${run.elapsed_seconds}s | seed ${run.seed}`;
+      $("historyFilename").textContent = run.filename;
+      $("historyImage").src = run.image_url;
+      $("historyJson").value = JSON.stringify(run.semantic_json, null, 2);
+      $("historyMetrics").innerHTML = `<div class="metrics">${metricCellsHtml(run.semantic_json, run.evaluation)}</div>`;
+      renderEvaluation("historyValidation", run.evaluation, "historyValidationLabel");
+      $("historyPeople").innerHTML = peopleHtml(run.semantic_json);
+      $("historyPrompt").value = run.effective_prompt || run.prompt || "";
+    }
+
+    async function clearHistory() {
+      if (!confirm("Delete all saved Qwen history records and copied images?")) return;
+      const response = await fetch("/api/history/clear", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not clear history.");
+      state.activeHistory = null;
+      state.historyRecord = null;
+      await loadHistory();
+    }
+
+    document.querySelectorAll(".trial-tab").forEach((button) => button.addEventListener("click", () => { state.active = Number(button.dataset.trial); renderTrial(); }));
+    $("reviewNav").addEventListener("click", () => switchView("review"));
+    $("historyNav").addEventListener("click", () => switchView("history"));
+    $("runAll").addEventListener("click", runAll);
+    $("clearImage").addEventListener("click", clearImage);
+    $("dropZone").addEventListener("click", () => $("fileInput").click());
+    $("fileInput").addEventListener("change", (event) => loadFile(event.target.files[0]));
+    $("dropZone").addEventListener("dragover", (event) => { event.preventDefault(); $("dropZone").classList.add("dragging"); });
+    $("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("dragging"));
+    $("dropZone").addEventListener("drop", (event) => { event.preventDefault(); $("dropZone").classList.remove("dragging"); loadFile(event.dataTransfer.files[0]); });
+    $("temperature").addEventListener("input", () => $("temperatureValue").textContent = Number($("temperature").value).toFixed(2));
+    $("downloadOne").addEventListener("click", () => downloadJson(trials[state.active].semanticJson, `qwen_core_result_${state.active + 1}.json`));
+    $("downloadAll").addEventListener("click", () => downloadJson({ image: state.file?.name, prompt: $("prompt").value, results: trials.filter((trial) => trial.semanticJson).map((trial) => ({ result: trial.index + 1, seed: trial.seed, history_id: trial.historyId, semantic_json: trial.semanticJson, evaluation: trial.evaluation })) }, "qwen_core_results.json"));
+    $("downloadHistory").addEventListener("click", () => state.historyRecord && downloadJson(state.historyRecord, `qwen_history_${state.historyRecord.id}.json`));
+    $("refreshHistory").addEventListener("click", () => loadHistory(true).catch((error) => alert(error.message)));
+    $("clearHistory").addEventListener("click", () => clearHistory().catch((error) => alert(error.message)));
+
+    fetch("/api/config", { cache: "no-store" }).then(async (response) => {
+      const config = await response.json();
+      if (!response.ok) throw new Error(config.error || "Could not load configuration.");
+      $("prompt").value = config.prompt;
+      const runtime = config.runtime || {};
+      $("runtime").textContent = `${runtime.model || "Qwen"} | ${runtime.device || "runtime unavailable"}`;
+      if (!runtime.ready) statusText("Qwen packages are not installed in this Python environment.", true);
+    }).catch((error) => statusText(error.message, true));
+    renderTrial();
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.cache/
+models/
+outputs/
+history/
+*.safetensors
+*.bin
