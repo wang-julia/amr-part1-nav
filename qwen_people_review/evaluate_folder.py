@@ -19,38 +19,7 @@ ROOT = Path(__file__).resolve().parent
 SUPPORTED_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".avif"}
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("folder", nargs="?", default=str(ROOT / "evaluation_set" / "images"))
-    parser.add_argument("--prompt", default=str(ROOT / "prompt.txt"))
-    parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--match", default="", help="Only evaluate filenames containing this text")
-    parser.add_argument("--report", default=str(ROOT / "evaluation_set" / "qwen_results_latest.json"))
-    parser.add_argument("--batch-id", default="", help="History label for this independent trial")
-    args = parser.parse_args()
-
-    folder = Path(args.folder).resolve()
-    prompt = Path(args.prompt).read_text(encoding="utf-8").strip()
-    context: dict = {}
-    model_id = os.environ.get("QWEN_MODEL", DEFAULT_MODEL)
-    images = sorted(path for path in folder.iterdir() if path.suffix.lower() in SUPPORTED_SUFFIXES)
-    if args.match:
-        images = [path for path in images if args.match.lower() in path.name.lower()]
-    if args.limit > 0:
-        images = images[: args.limit]
-    if not images:
-        raise SystemExit(f"No supported images found in {folder}")
-
-    generated_batch_id = f"folder-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
-    batch_id = args.batch_id.strip() or generated_batch_id
-    completed = []
-    failures = []
-    print(f"Model: {model_id}")
-    print(f"Images: {len(images)}")
-    print(f"Batch: {batch_id}")
-
-    for index, image_path in enumerate(images, start=1):
+def main() -> None:tiones, start=1):
         seed = secrets.randbelow(2_147_483_647)
         started = time.perf_counter()
         print(f"[{index}/{len(images)}] {image_path.name}", flush=True)

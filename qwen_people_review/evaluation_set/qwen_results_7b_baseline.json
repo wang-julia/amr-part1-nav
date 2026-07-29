@@ -1,0 +1,78 @@
+{
+  "batch_id": "qwen-7b-baseline",
+  "created_at": "2026-07-28T15:23:01.558331+00:00",
+  "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "temperature": 0.0,
+  "prompt": "Inspect the robot-camera image and return only valid JSON.\n\nRequired root fields: people_count, people.\nRequired fields for every person: person_id, motion, distance, torso_direction, face_direction.\nAllowed motion: walking, standing, running. Allowed distance: close, mid, far. Allowed directions: front, left, right, back, frontleft, frontright, backleft, backright.\n\nCreate one people record per visible real person. people_count must equal the number of records. Ignore reflections, posters, screens, mannequins, and statues. For no people, return {\"people_count\":0,\"people\":[]}.\n\nMotion:\n- walking: visible step or walking stride\n- running: clear running stride or strong forward lean\n- standing: no visible walking or running evidence\n\nDistance:\n- close: body is cropped by an image edge, any lower legs or feet continue below the bottom edge, or estimated full-body height is over 55% of the image; cropping is a hard close override\n- mid: most or all of the body fits and estimated height is 25-55%\n- far: complete person is under 25%\n\nDirections use the camera viewing direction, not the visible body surface:\n- front: points with the camera, away from the lens and deeper into the image\n- back: points against the camera direction, toward the lens and robot\n- left/right: points toward image-left/image-right\n- diagonals combine depth and lateral direction\n- `front` never means that the front of the body is visible; it means the person's direction arrow points away from the camera\n\nTorso decision:\n- visible chest/front of body facing the camera -> back\n- visible back of body facing the camera -> front\n- camera-facing chest also pointing image-left/image-right -> backleft/backright\n\nFace decision:\n- visible face looking at camera -> back\n- camera-facing face turned image-left/image-right -> backleft/backright\n- back of head facing camera -> front\n- pure nose profile toward image-left/image-right -> left/right\n- use back only for a squarely camera-facing head with no clear lateral turn\n- if the face remains visible but the nose, head, or gaze clearly aims toward image-left/image-right, use backleft/backright even when the turn is subtle\n\nAnatomical consistency:\n- a person's face may turn relative to the torso, but the two directions must be no more than 90 degrees apart\n- never pair front with back, frontleft with backright, or frontright with backleft\n- if cues conflict, determine the torso from the visible chest or back first, then choose the nearest face direction consistent with the visible eyes, nose, and head turn\n- example: visible chest toward the camera with the face turned toward image-left -> torso back, face backleft\n\nMandatory final checks:\n- if the chest is visible, torso_direction must be back, backleft, or backright, never front\n- if the eyes, nose, and front of the face are visible, face_direction must be back, backleft, or backright, never front\n- missing lower legs or feet beyond the bottom image edge makes distance close even when the visible portion seems medium-sized\n- torso_direction and face_direction must be no more than 90 degrees apart\n\nDecide torso and face separately, then run all final checks before returning JSON. Both directions are mandatory, including for standing people. Do not use the filename. Do not add fields, explanations, markdown, or prose.",
+  "completed": [],
+  "failures": [
+    {
+      "filename": "01_empty_corridor.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "04_standing_center_near.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "05_standing_right_near.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "06_standing_center_medium.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "07_walking_center_medium.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "08_walking_right_near.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "09_walking_center_far.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "11_three_people_walking.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "13_group_standing_along_wall.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "2_walking_mid_mid_towards.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "4_walking_mid_mid_towards.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "standing_far_right_left.webp",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "standing_mid_left.avif",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "walking_far_mid_towards.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "walking_mid_left_front.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "walking_mid_mid_front.jpg",
+      "error": "operator torchvision::nms does not exist"
+    },
+    {
+      "filename": "walking_mid_right_front.jpg",
+      "error": "operator torchvision::nms does not exist"
+    }
+  ]
+}
