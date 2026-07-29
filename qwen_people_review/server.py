@@ -41,17 +41,12 @@ def runtime_status() -> dict:
 
         status["torch"] = True
         status["cuda"] = bool(torch.cuda.is_available())
-        if status["cuda"]:
-            status["device"] = torch.cuda.get_device_name(0)
-        elif torch.backends.mps.is_available():
-            status["device"] = "Apple MPS"
-        else:
-            status["device"] = "CPU"
+        status["device"] = torch.cuda.get_device_name(0) if status["cuda"] else "CPU"
     except Exception as exc:
         status["error"] = str(exc)
     try:
         import transformers  # noqa: F401
-        import timm  # noqa: F401
+        import qwen_vl_utils  # noqa: F401
 
         status["transformers"] = True
     except Exception:

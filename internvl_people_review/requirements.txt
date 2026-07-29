@@ -1,0 +1,5 @@
+transformers>=4.51
+accelerate
+timm
+pillow
+torchvision
