@@ -1,5 +1,6 @@
-transformers>=4.51
+transformers>=4.49,<4.50
 accelerate
 timm
+einops
 pillow
 torchvision

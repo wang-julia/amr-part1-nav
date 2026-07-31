@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InternVL Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f0f4f8;
+      --panel: #ffffff;
+      --panel-2: #f5f8fb;
+      --line: #d0dae5;
+      --text: #0f1e2e;
+      --muted: #5a7490;
+      --accent: #0d9488;
+      --accent-dark: #ccfbf1;
+      --warn: #b45309;
+      --danger: #dc2626;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 15px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    .hidden { display: none !important; }
+    header { position: sticky; top: 0; z-index: 5; min-height: 56px; display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .96); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; white-space: nowrap; }
+    .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 5px; background: var(--accent); color: #031110; font-weight: 900; }
+    nav { display: flex; align-self: stretch; }
+    .nav-button { padding: 0 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+    .nav-button.active { color: var(--text); border-bottom-color: var(--accent); }
+    .runtime { margin-left: auto; color: var(--muted); font-size: 13px; text-align: right; }
+    main { width: min(1500px, calc(100% - 32px)); margin: 18px auto 36px; }
+    .panel { border: 1px solid var(--line); border-radius: 7px; background: var(--panel); overflow: hidden; }
+    .section-title { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 15px; border-bottom: 1px solid var(--line); }
+    h1, h2, p { margin: 0; }
+    h1 { font-size: 18px; }
+    h2 { font-size: 15px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .input-grid { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(420px, 1.2fr); gap: 12px; }
+    .drop-zone { min-height: 355px; display: grid; place-items: center; position: relative; cursor: pointer; background: #edf2f7; }
+    .drop-zone.dragging { outline: 2px solid var(--accent); outline-offset: -6px; }
+    .drop-empty { text-align: center; color: var(--muted); }
+    .drop-empty strong { display: block; color: var(--text); font-size: 18px; margin-bottom: 5px; }
+    #preview { display: none; width: 100%; height: 355px; object-fit: contain; }
+    .filebar { min-height: 49px; display: flex; align-items: center; gap: 10px; padding: 8px 13px; border-top: 1px solid var(--line); }
+    .filebar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+    textarea { width: 100%; resize: vertical; border: 0; outline: 0; background: #f8fafc; color: #0f1e2e; font: 13px/1.5 Consolas, monospace; letter-spacing: 0; }
+    #prompt { height: 404px; min-height: 250px; padding: 15px; }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+    .status { min-width: 0; flex: 1; color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .slider { display: flex; align-items: center; gap: 9px; color: var(--muted); white-space: nowrap; }
+    input[type="range"] { accent-color: var(--accent); }
+    .button { min-height: 38px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); cursor: pointer; font-weight: 700; }
+    .button:hover:not(:disabled) { border-color: #4b627e; }
+    .button.primary { border-color: #2e9b92; background: #287e77; color: #f4ffff; }
+    .button.danger { color: var(--danger); }
+    .button:disabled { cursor: not-allowed; opacity: .45; }
+    .results-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+    .trial-tab { width: 145px; min-height: 48px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); text-align: left; cursor: pointer; }
+    .trial-tab strong, .trial-tab span { display: block; }
+    .trial-tab span { color: var(--muted); font-size: 12px; }
+    .trial-tab.active { border-color: var(--accent); background: var(--accent-dark); }
+    .results-actions { margin-left: auto; display: flex; gap: 8px; }
+    .result-body { min-height: 410px; display: grid; grid-template-columns: minmax(420px, 1.05fr) minmax(380px, .95fr); }
+    .result-column { min-width: 0; }
+    .result-column + .result-column { border-left: 1px solid var(--line); }
+    .result-placeholder { min-height: 410px; display: grid; place-items: center; color: var(--muted); text-align: center; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .metric { padding: 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); }
+    .metric span, .metric strong { display: block; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .metric strong { margin-top: 3px; font-size: 19px; }
+    .validation { padding: 12px 15px; border-bottom: 1px solid var(--line); }
+    .validation.good { color: var(--success); }
+    .validation.bad { color: var(--danger); }
+    .validation ul { margin: 7px 0 0; padding-left: 20px; }
+    #peopleTable, #historyPeople, #archivePeople { overflow-x: auto; }
+    .people-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    .people-table th, .people-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); text-align: left; }
+    .people-table th { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .empty-table { padding: 42px 15px; color: var(--muted); text-align: center; }
+    .json-box { height: 357px; min-height: 280px; padding: 14px; resize: none; }
+    /* history / archive shared layout */
+    .history-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); min-height: calc(100vh - 112px); }
+    .history-sidebar { border-right: 1px solid var(--line); }
+    .history-list { max-height: calc(100vh - 166px); overflow-y: auto; }
+    .history-item { width: 100%; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; }
+    .history-item:hover, .history-item.active { background: var(--panel-2); }
+    .history-item.active { box-shadow: inset 3px 0 var(--accent); }
+    .history-thumb { width: 58px; height: 58px; object-fit: cover; border-radius: 4px; background: #e2e8f0; }
+    .history-item strong, .history-item span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item span { color: var(--muted); font-size: 12px; }
+    .history-detail { min-width: 0; }
+    .history-placeholder { min-height: 600px; display: grid; place-items: center; color: var(--muted); text-align: center; }
+    .history-content { padding: 14px; }
+    .history-grid { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(420px, 1.2fr); gap: 12px; }
+    .history-image { width: 100%; height: 360px; object-fit: contain; background: #edf2f7; }
+    .history-json { height: 360px; padding: 14px; resize: none; }
+    .history-table { margin-top: 12px; }
+    .prompt-history { margin-top: 12px; }
+    .prompt-history textarea { height: 285px; padding: 14px; resize: vertical; }
+    /* archive batch groups */
+    .batch-header { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); background: var(--panel-2); text-align: left; cursor: pointer; }
+    .batch-header:hover { background: #e8f0f7; }
+    .batch-header-info { flex: 1; min-width: 0; }
+    .batch-header-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .batch-header-info span { display: block; color: var(--muted); font-size: 12px; }
+    .batch-chevron { color: var(--muted); font-size: 11px; flex-shrink: 0; transition: transform .15s; }
+    .batch-group.open .batch-chevron { transform: rotate(90deg); }
+    .batch-runs { display: none; }
+    .batch-group.open .batch-runs { display: block; }
+    .batch-runs .history-item { padding-left: 22px; }
+    @media (max-width: 920px) {
+      main { width: min(100% - 18px, 760px); }
+      .input-grid, .result-body, .history-grid, .history-layout { grid-template-columns: 1fr; }
+      .result-column + .result-column, .history-sidebar { border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
+      .history-list { max-height: 320px; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .slider { justify-content: space-between; }
+      .results-head { flex-wrap: wrap; }
+      .trial-tab { flex: 1 1 120px; }
+      .results-actions { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="brand-mark">V</span><span>InternVL Review</span></div>
+    <nav>
+      <button class="nav-button active" id="reviewNav">Review</button>
+      <button class="nav-button" id="historyNav">History</button>
+      <button class="nav-button" id="archiveNav">Archive</button>
+    </nav>
+    <div class="runtime" id="runtime">Checking InternVL runtime...</div>
+  </header>
+
+  <main>
+    <!-- ── REVIEW ─────────────────────────────────────────────────── -->
+    <section id="reviewView">
+      <div class="input-grid">
+        <div class="panel">
+          <div class="section-title"><h1>Input Image</h1><span class="muted">Shared by three independent runs</span></div>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/bmp,image/avif" hidden>
+            <div class="drop-empty" id="dropEmpty"><strong>Select a robot-camera image</strong><span>JPEG, PNG, WebP, BMP, or AVIF</span></div>
+            <img id="preview" alt="Selected robot-camera frame">
+          </div>
+          <div class="filebar"><button class="button" id="clearImage" disabled>Clear</button><span id="fileMeta">No image selected</span></div>
+        </div>
+        <div class="panel">
+          <div class="section-title"><h1>InternVL Prompt</h1><span class="muted">Editable before generation</span></div>
+          <textarea id="prompt" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="status" id="status">Select an image to begin.</div>
+        <label class="slider">Variation <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.25"><strong id="temperatureValue">0.25</strong></label>
+        <button class="button primary" id="runAll" disabled>Generate 3 results</button>
+      </div>
+
+      <div class="panel">
+        <div class="results-head">
+          <button class="trial-tab active" data-trial="0"><strong>Result 1</strong><span>Waiting</span></button>
+          <button class="trial-tab" data-trial="1"><strong>Result 2</strong><span>Waiting</span></button>
+          <button class="trial-tab" data-trial="2"><strong>Result 3</strong><span>Waiting</span></button>
+          <div class="results-actions"><button class="button" id="downloadOne" disabled>Download JSON</button><button class="button" id="downloadAll" disabled>Download all</button></div>
+        </div>
+        <div class="result-placeholder" id="resultPlaceholder"><div><strong>No result selected</strong><br>Generated trials appear here.</div></div>
+        <div class="result-body hidden" id="resultBody">
+          <div class="result-column">
+            <div class="section-title"><h2>Core Observations</h2><span class="muted" id="trialMeta"></span></div>
+            <div class="metrics" id="metrics"></div>
+            <div class="validation" id="validation"></div>
+            <div id="peopleTable"></div>
+          </div>
+          <div class="result-column">
+            <div class="section-title"><h2>Raw InternVL JSON</h2><span class="muted">Unmodified model fields</span></div>
+            <textarea class="json-box" id="jsonOutput" readonly spellcheck="false"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── HISTORY (latest run only) ─────────────────────────────── -->
+    <section class="panel hidden" id="historyView">
+      <div class="history-layout">
+        <aside class="history-sidebar">
+          <div class="section-title"><div><h1>Latest Run</h1><span class="muted" id="historyCount">0 results</span></div><button class="button" id="refreshHistory">Refresh</button></div>
+          <div class="history-list" id="historyList"></div>
+          <div class="filebar"><button class="button danger" id="clearHistory">Clear all history</button></div>
+        </aside>
+        <div class="history-detail">
+          <div class="history-placeholder" id="historyPlaceholder"><div><strong>Select a saved result</strong><br>Its image, observations, JSON, and prompt appear here.</div></div>
+          <div class="hidden" id="historyContent">
+            <div class="section-title"><div><h1 id="historyTitle">Saved result</h1><span class="muted" id="historyMeta"></span></div><button class="button" id="downloadHistory">Download record</button></div>
+            <div class="history-content">
+              <div class="history-grid">
+                <div class="panel"><div class="section-title"><h2>Source Image</h2><span class="muted" id="historyFilename"></span></div><img class="history-image" id="historyImage" alt="Saved source image"></div>
+                <div class="panel"><div class="section-title"><h2>Raw InternVL JSON</h2><span class="muted">Saved model response</span></div><textarea class="history-json" id="historyJson" readonly></textarea></div>
+              </div>
+              <div class="panel history-table"><div class="section-title"><h2>Core Observations</h2><span class="muted" id="historyValidationLabel"></span></div><div id="historyMetrics"></div><div id="historyValidation"></div><div id="historyPeople"></div></div>
+              <div class="panel prompt-history"><div class="section-title"><h2>Exact Prompt Used</h2><span class="muted">Includes any appended context and output instruction</span></div><textarea id="historyPrompt" readonly></textarea></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ARCHIVE (previous runs grouped by batch) ───────────────── -->
+    <section class="panel hidden" id="archiveView">
+      <div class="history-layout">
+        <aside class="history-sidebar">
+          <div class="section-title"><div><h1>Archive</h1><span class="muted" id="archiveCount">0 previous runs</span></div><button class="button" id="refreshArchive">Refresh</button></div>
+          <div class="history-list" id="archiveList"></div>
+        </aside>
+        <div class="history-detail">
+          <div class="history-placeholder" id="archivePlaceholder"><div><strong>Select a saved result</strong><br>Expand a run group on the left, then pick an entry.</div></div>
+          <div class="hidden" id="archiveContent">
+            <div class="section-title"><div><h1 id="archiveTitle">Saved result</h1><span class="muted" id="archiveMeta"></span></div><button class="button" id="downloadArchive">Download record</button></div>
+            <div class="history-content">
+              <div class="history-grid">
+                <div class="panel"><div class="section-title"><h2>Source Image</h2><span class="muted" id="archiveFilename"></span></div><img class="history-image" id="archiveImage" alt="Saved source image"></div>
+                <div class="panel"><div class="section-title"><h2>Raw InternVL JSON</h2><span class="muted">Saved model response</span></div><textarea class="history-json" id="archiveJson" readonly></textarea></div>
+              </div>
+              <div class="panel history-table"><div class="section-title"><h2>Core Observations</h2><span class="muted" id="archiveValidationLabel"></span></div><div id="archiveMetrics"></div><div id="archiveValidation"></div><div id="archivePeople"></div></div>
+              <div class="panel prompt-history"><div class="section-title"><h2>Exact Prompt Used</h2><span class="muted">Includes any appended context and output instruction</span></div><textarea id="archivePrompt" readonly></textarea></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const state = {
+      file: null, imageBase64: "", active: 0, running: false,
+      allRuns: [],
+      latestRuns: [], activeHistory: null, historyRecord: null,
+      archiveBatches: [], activeArchive: null, archiveRecord: null,
+    };
+    const trials = Array.from({ length: 3 }, (_, i) => ({ index: i, status: "Waiting", semanticJson: null, evaluation: null, effectivePrompt: "", seed: null, elapsed: null, historyId: null, error: null }));
+
+    function statusText(msg, err = false) { $("status").textContent = msg; $("status").classList.toggle("error", err); }
+
+    function switchView(name) {
+      $("reviewView").classList.toggle("hidden", name !== "review");
+      $("historyView").classList.toggle("hidden", name !== "history");
+      $("archiveView").classList.toggle("hidden", name !== "archive");
+      $("reviewNav").classList.toggle("active", name === "review");
+      $("historyNav").classList.toggle("active", name === "history");
+      $("archiveNav").classList.toggle("active", name === "archive");
+      if (name === "history") loadAllHistory(true).catch((e) => alert(e.message));
+      if (name === "archive") loadAllHistory(false).catch((e) => alert(e.message));
+    }
+
+    function renderEvaluation(targetId, evaluation, labelId = "") {
+      const ev = evaluation || { valid: false, issues: ["No schema evaluation was saved."] };
+      const issues = Array.isArray(ev.issues) ? ev.issues : [];
+      if (labelId) $(labelId).textContent = ev.valid ? "Schema complete" : `${issues.length} issue${issues.length === 1 ? "" : "s"}`;
+      const el = $(targetId);
+      el.className = `validation ${ev.valid ? "good" : "bad"}`;
+      el.innerHTML = ev.valid
+        ? "<strong>Schema complete</strong> — motion, distance, torso direction, and face direction are present for every person."
+        : `<strong>Check this response</strong>${issues.length ? `<ul>${issues.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>` : ""}`;
+    }
+
+    function metricCellsHtml(json, ev) {
+      return `<div class="metric"><span>Reported people</span><strong>${escapeHtml(json?.people_count ?? "-")}</strong></div><div class="metric"><span>Person records</span><strong>${escapeHtml(ev?.person_records ?? 0)}</strong></div><div class="metric"><span>Complete records</span><strong>${escapeHtml(ev?.complete_records ?? 0)}</strong></div>`;
+    }
+
+    function peopleHtml(json) {
+      const people = Array.isArray(json?.people) ? json.people : [];
+      if (!people.length) return '<div class="empty-table">No person records returned.</div>';
+      return `<table class="people-table"><thead><tr><th>Person</th><th>Motion</th><th>Distance</th><th>Torso direction</th><th>Face direction</th></tr></thead><tbody>${people.map((p, i) => `<tr><td>${escapeHtml(p?.person_id ?? i + 1)}</td><td>${escapeHtml(p?.motion ?? "missing")}</td><td>${escapeHtml(p?.distance ?? "missing")}</td><td>${escapeHtml(p?.torso_direction ?? "missing")}</td><td>${escapeHtml(p?.face_direction ?? "missing")}</td></tr>`).join("")}</tbody></table>`;
+    }
+
+    function renderTabs() {
+      document.querySelectorAll(".trial-tab").forEach((btn, i) => { btn.classList.toggle("active", i === state.active); btn.querySelector("span").textContent = trials[i].status; });
+    }
+
+    function renderTrial() {
+      renderTabs();
+      const trial = trials[state.active];
+      const ready = !!trial.semanticJson;
+      $("resultPlaceholder").classList.toggle("hidden", ready);
+      $("resultBody").classList.toggle("hidden", !ready);
+      $("downloadOne").disabled = !ready;
+      $("downloadAll").disabled = !trials.some((t) => t.semanticJson);
+      if (!ready) { $("resultPlaceholder").innerHTML = trial.error ? `<div><strong>Result failed</strong><br>${escapeHtml(trial.error)}</div>` : "<div><strong>No result selected</strong><br>Generated trials appear here.</div>"; return; }
+      $("trialMeta").textContent = `${trial.elapsed}s | seed ${trial.seed}`;
+      $("metrics").innerHTML = metricCellsHtml(trial.semanticJson, trial.evaluation);
+      renderEvaluation("validation", trial.evaluation);
+      $("peopleTable").innerHTML = peopleHtml(trial.semanticJson);
+      $("jsonOutput").value = JSON.stringify(trial.semanticJson, null, 2);
+    }
+
+    function resetTrials() {
+      trials.forEach((t) => Object.assign(t, { status: "Waiting", semanticJson: null, evaluation: null, effectivePrompt: "", seed: null, elapsed: null, historyId: null, error: null }));
+      state.active = 0;
+      renderTrial();
+    }
+
+    async function runTrial(trial, batchId) {
+      trial.status = "Running"; renderTabs();
+      const seed = Math.floor(Math.random() * 2147483646) + 1;
+      const res = await fetch("/api/infer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename: state.file.name, image_base64: state.imageBase64, prompt: $("prompt").value, context: {}, temperature: Number($("temperature").value), seed, batch_id: batchId, trial_index: trial.index + 1 }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "InternVL inference failed.");
+      Object.assign(trial, { status: data.evaluation?.valid ? "Complete" : "Review", semanticJson: data.semantic_json, evaluation: data.evaluation, effectivePrompt: data.effective_prompt, seed: data.seed, elapsed: data.elapsed_seconds, historyId: data.history_id });
+    }
+
+    async function runAll() {
+      if (!state.file || state.running) return;
+      state.running = true; resetTrials(); $("runAll").disabled = true;
+      statusText("InternVL is generating three independent results...");
+      const batchId = `web-${Date.now()}`;
+      for (const trial of trials) {
+        state.active = trial.index; renderTrial();
+        try { await runTrial(trial, batchId); } catch (e) { trial.status = "Failed"; trial.error = e.message; }
+        renderTrial();
+      }
+      state.running = false; $("runAll").disabled = false;
+      const completed = trials.filter((t) => t.semanticJson).length;
+      statusText(`${completed} of 3 results completed and saved to History.`, completed !== 3);
+    }
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith("image/")) return statusText("Choose a supported image file.", true);
+      if (file.size > 20 * 1024 * 1024) return statusText("The image must be 20 MB or smaller.", true);
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.file = file; state.imageBase64 = reader.result;
+        $("preview").src = reader.result; $("preview").style.display = "block";
+        $("dropEmpty").style.display = "none";
+        $("fileMeta").textContent = `${file.name} | ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        $("clearImage").disabled = false; $("runAll").disabled = false;
+        resetTrials(); statusText("Image ready.");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      state.file = null; state.imageBase64 = ""; $("fileInput").value = "";
+      $("preview").removeAttribute("src"); $("preview").style.display = "none";
+      $("dropEmpty").style.display = "block"; $("fileMeta").textContent = "No image selected";
+      $("clearImage").disabled = true; $("runAll").disabled = true;
+      resetTrials(); statusText("Select an image to begin.");
+    }
+
+    function downloadJson(value, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
+      link.download = filename; link.click(); URL.revokeObjectURL(link.href);
+    }
+
+    function formatDate(v) { const d = new Date(v); return Number.isNaN(d.getTime()) ? "Unknown time" : d.toLocaleString(); }
+
+    // ── history helpers ──────────────────────────────────────────────
+
+    function splitRuns(runs) {
+      if (!runs.length) return { latest: [], batches: [] };
+      const latestId = runs[0].batch_id;
+      const latest = runs.filter((r) => r.batch_id === latestId);
+      const prev = runs.filter((r) => r.batch_id !== latestId);
+      const batchMap = {};
+      for (const r of prev) { if (!batchMap[r.batch_id]) batchMap[r.batch_id] = []; batchMap[r.batch_id].push(r); }
+      const batches = Object.entries(batchMap).map(([id, items]) => ({ batch_id: id, runs: items, created_at: items[0].created_at, count: items.length }));
+      return { latest, batches };
+    }
+
+    async function loadAllHistory(selectNewest = false) {
+      const res = await fetch("/api/history", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not load history.");
+      state.allRuns = data.runs || [];
+      const { latest, batches } = splitRuns(state.allRuns);
+      state.latestRuns = latest;
+      state.archiveBatches = batches;
+      renderHistoryList(selectNewest);
+      renderArchiveList();
+    }
+
+    function renderHistoryList(selectNewest = false) {
+      const runs = state.latestRuns;
+      $("historyCount").textContent = `${runs.length} result${runs.length === 1 ? "" : "s"}`;
+      if (!runs.length) {
+        $("historyList").innerHTML = '<div class="history-placeholder"><div><strong>No results in this run</strong><br>Generate results or run evaluate_folder.py.</div></div>';
+        $("historyPlaceholder").classList.remove("hidden"); $("historyContent").classList.add("hidden"); return;
+      }
+      $("historyList").innerHTML = runs.map((r) => `<button class="history-item${r.id === state.activeHistory ? " active" : ""}" data-id="${r.id}"><img class="history-thumb" src="${r.image_url}" alt=""><span><strong>${escapeHtml(r.filename)}</strong><span>${escapeHtml(r.people_count)} people | ${r.schema_valid ? "Schema OK" : `${r.issue_count} issues`}</span><span>${escapeHtml(formatDate(r.created_at))}</span></span></button>`).join("");
+      document.querySelectorAll("#historyList .history-item").forEach((btn) => btn.addEventListener("click", () => loadDetailInto(btn.dataset.id, "history")));
+      if (selectNewest || !state.activeHistory || !runs.find((r) => r.id === state.activeHistory)) loadDetailInto(runs[0].id, "history").catch(() => {});
+    }
+
+    function renderArchiveList() {
+      const batches = state.archiveBatches;
+      $("archiveCount").textContent = `${batches.length} previous run${batches.length === 1 ? "" : "s"}`;
+      if (!batches.length) {
+        $("archiveList").innerHTML = '<div class="history-placeholder"><div><strong>No archived runs</strong><br>Previous runs appear here after a new run is started.</div></div>';
+        $("archivePlaceholder").classList.remove("hidden"); $("archiveContent").classList.add("hidden"); return;
+      }
+      $("archiveList").innerHTML = batches.map((batch, bi) => `
+        <div class="batch-group" id="batch-${bi}">
+          <button class="batch-header" data-batch="${bi}">
+            <div class="batch-header-info">
+              <strong>${escapeHtml(batch.batch_id)}</strong>
+              <span>${batch.count} result${batch.count === 1 ? "" : "s"} · ${escapeHtml(formatDate(batch.created_at))}</span>
+            </div>
+            <span class="batch-chevron">▶</span>
+          </button>
+          <div class="batch-runs">
+            ${batch.runs.map((r) => `<button class="history-item${r.id === state.activeArchive ? " active" : ""}" data-id="${r.id}"><img class="history-thumb" src="${r.image_url}" alt=""><span><strong>${escapeHtml(r.filename)}</strong><span>${escapeHtml(r.people_count)} people | ${r.schema_valid ? "Schema OK" : `${r.issue_count} issues`}</span><span>${escapeHtml(formatDate(r.created_at))}</span></span></button>`).join("")}
+          </div>
+        </div>`).join("");
+
+      document.querySelectorAll(".batch-header").forEach((btn) => {
+        btn.addEventListener("click", () => { btn.closest(".batch-group").classList.toggle("open"); });
+      });
+      document.querySelectorAll("#archiveList .history-item").forEach((btn) => {
+        btn.addEventListener("click", () => loadDetailInto(btn.dataset.id, "archive"));
+      });
+    }
+
+    async function loadDetailInto(runId, target) {
+      const res = await fetch(`/api/history/${runId}`, { cache: "no-store" });
+      const run = await res.json();
+      if (!res.ok) throw new Error(run.error || "Could not load the saved result.");
+
+      if (target === "history") {
+        state.activeHistory = runId; state.historyRecord = run;
+        renderHistoryList();
+        $("historyPlaceholder").classList.add("hidden"); $("historyContent").classList.remove("hidden");
+        $("historyTitle").textContent = `Trial ${run.trial_index} | ${run.filename}`;
+        $("historyMeta").textContent = `${run.batch_id} | ${formatDate(run.created_at)} | ${run.elapsed_seconds}s`;
+        $("historyFilename").textContent = run.filename;
+        $("historyImage").src = run.image_url;
+        $("historyJson").value = JSON.stringify(run.semantic_json, null, 2);
+        $("historyMetrics").innerHTML = `<div class="metrics">${metricCellsHtml(run.semantic_json, run.evaluation)}</div>`;
+        renderEvaluation("historyValidation", run.evaluation, "historyValidationLabel");
+        $("historyPeople").innerHTML = peopleHtml(run.semantic_json);
+        $("historyPrompt").value = run.effective_prompt || run.prompt || "";
+      } else {
+        state.activeArchive = runId; state.archiveRecord = run;
+        renderArchiveList();
+        $("archivePlaceholder").classList.add("hidden"); $("archiveContent").classList.remove("hidden");
+        $("archiveTitle").textContent = `Trial ${run.trial_index} | ${run.filename}`;
+        $("archiveMeta").textContent = `${run.batch_id} | ${formatDate(run.created_at)} | ${run.elapsed_seconds}s`;
+        $("archiveFilename").textContent = run.filename;
+        $("archiveImage").src = run.image_url;
+        $("archiveJson").value = JSON.stringify(run.semantic_json, null, 2);
+        $("archiveMetrics").innerHTML = `<div class="metrics">${metricCellsHtml(run.semantic_json, run.evaluation)}</div>`;
+        renderEvaluation("archiveValidation", run.evaluation, "archiveValidationLabel");
+        $("archivePeople").innerHTML = peopleHtml(run.semantic_json);
+        $("archivePrompt").value = run.effective_prompt || run.prompt || "";
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm("Delete all saved InternVL history records and copied images?")) return;
+      const res = await fetch("/api/history/clear", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not clear history.");
+      state.activeHistory = null; state.historyRecord = null;
+      state.activeArchive = null; state.archiveRecord = null;
+      await loadAllHistory();
+    }
+
+    // ── wire up events ───────────────────────────────────────────────
+    document.querySelectorAll(".trial-tab").forEach((btn) => btn.addEventListener("click", () => { state.active = Number(btn.dataset.trial); renderTrial(); }));
+    $("reviewNav").addEventListener("click", () => switchView("review"));
+    $("historyNav").addEventListener("click", () => switchView("history"));
+    $("archiveNav").addEventListener("click", () => switchView("archive"));
+    $("runAll").addEventListener("click", runAll);
+    $("clearImage").addEventListener("click", clearImage);
+    $("dropZone").addEventListener("click", () => $("fileInput").click());
+    $("fileInput").addEventListener("change", (e) => loadFile(e.target.files[0]));
+    $("dropZone").addEventListener("dragover", (e) => { e.preventDefault(); $("dropZone").classList.add("dragging"); });
+    $("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("dragging"));
+    $("dropZone").addEventListener("drop", (e) => { e.preventDefault(); $("dropZone").classList.remove("dragging"); loadFile(e.dataTransfer.files[0]); });
+    $("temperature").addEventListener("input", () => $("temperatureValue").textContent = Number($("temperature").value).toFixed(2));
+    $("downloadOne").addEventListener("click", () => downloadJson(trials[state.active].semanticJson, `internvl_result_${state.active + 1}.json`));
+    $("downloadAll").addEventListener("click", () => downloadJson({ image: state.file?.name, prompt: $("prompt").value, results: trials.filter((t) => t.semanticJson).map((t) => ({ result: t.index + 1, seed: t.seed, history_id: t.historyId, semantic_json: t.semanticJson, evaluation: t.evaluation })) }, "internvl_results.json"));
+    $("downloadHistory").addEventListener("click", () => state.historyRecord && downloadJson(state.historyRecord, `internvl_history_${state.historyRecord.id}.json`));
+    $("downloadArchive").addEventListener("click", () => state.archiveRecord && downloadJson(state.archiveRecord, `internvl_archive_${state.archiveRecord.id}.json`));
+    $("refreshHistory").addEventListener("click", () => loadAllHistory(true).catch((e) => alert(e.message)));
+    $("refreshArchive").addEventListener("click", () => loadAllHistory(false).catch((e) => alert(e.message)));
+    $("clearHistory").addEventListener("click", () => clearHistory().catch((e) => alert(e.message)));
+
+    fetch("/api/config", { cache: "no-store" }).then(async (res) => {
+      const config = await res.json();
+      if (!res.ok) throw new Error(config.error || "Could not load configuration.");
+      $("prompt").value = config.prompt;
+      const rt = config.runtime || {};
+      $("runtime").textContent = `${rt.model || "InternVL"} | ${rt.device || "runtime unavailable"}`;
+      if (!rt.ready) statusText("InternVL packages are not installed in this Python environment.", true);
+    }).catch((e) => statusText(e.message, true));
+    renderTrial();
+  </script>
+</body>
+</html>

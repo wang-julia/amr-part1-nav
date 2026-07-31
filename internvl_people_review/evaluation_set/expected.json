@@ -1,0 +1,130 @@
+{
+  "labeling_rules": {
+    "side": "torso center: left 0-40%, center 40-60%, right 60-100%",
+    "distance": "visible body height: near >60%, medium 30-60%, far <30%; edge-cropped body is near",
+    "motion": "walking requires visible gait evidence; uncertain is valid when a still image is ambiguous"
+  },
+  "cases": [
+    {
+      "id": "01_empty_corridor",
+      "file": "images/01_empty_corridor.jpg",
+      "expected": {"people": []}
+    },
+    {
+      "id": "02_empty_open_space",
+      "file": "images/02_empty_open_space.jpg",
+      "expected": {"people": []}
+    },
+    {
+      "id": "03_standing_left_near",
+      "file": "images/03_standing_left_near.jpg",
+      "expected": {
+        "people": [
+          {"side": "left", "distance": "near", "motion": "standing", "direction": "unknown", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "04_standing_center_near",
+      "file": "images/04_standing_center_near.jpg",
+      "expected": {
+        "people": [
+          {"side": "center", "distance": "near", "motion": "standing", "direction": "unknown", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "05_standing_right_near",
+      "file": "images/05_standing_right_near.jpg",
+      "expected": {
+        "people": [
+          {"side": "right", "distance": "near", "motion": "standing", "direction": "unknown", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "06_standing_center_medium",
+      "file": "images/06_standing_center_medium.jpg",
+      "expected": {
+        "people": [
+          {"side": "center", "distance": "medium", "motion": "standing", "direction": "unknown", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "07_walking_center_medium",
+      "file": "images/07_walking_center_medium.jpg",
+      "expected": {
+        "people": [
+          {"side": "center", "distance": "medium", "motion": "walking", "direction": "away_from_camera", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "08_walking_right_near",
+      "file": "images/08_walking_right_near.jpg",
+      "expected": {
+        "people": [
+          {"side": "right", "distance": "near", "motion": "walking", "direction": "left", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "09_walking_center_far",
+      "file": "images/09_walking_center_far.jpg",
+      "expected": {
+        "people": [
+          {"side": "center", "distance": "far", "motion": "walking", "direction": "right", "group": null}
+        ]
+      }
+    },
+    {
+      "id": "10_two_people_walking",
+      "file": "images/10_two_people_walking.jpg",
+      "expected": {
+        "people": [
+          {"side": "center", "distance": "far", "motion": "walking", "direction": "right", "group": 1},
+          {"side": "right", "distance": "far", "motion": "walking", "direction": "right", "group": 1}
+        ]
+      }
+    },
+    {
+      "id": "11_three_people_walking",
+      "file": "images/11_three_people_walking.jpg",
+      "expected": {
+        "people": [
+          {"side": "left", "distance": "near", "motion": "walking", "direction": "toward_camera", "group": 1},
+          {"side": "center", "distance": "medium", "motion": "walking", "direction": "toward_camera", "group": 1},
+          {"side": "right", "distance": "medium", "motion": "walking", "direction": "toward_camera", "group": 1}
+        ]
+      }
+    },
+    {
+      "id": "12_four_people_standing",
+      "file": "images/12_four_people_standing.jpg",
+      "expected": {
+        "people": [
+          {"side": "left", "distance": "near", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "left", "distance": "near", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "center", "distance": "near", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "right", "distance": "near", "motion": "standing", "direction": "unknown", "group": 1}
+        ]
+      }
+    },
+    {
+      "id": "13_group_standing_along_wall",
+      "file": "images/13_group_standing_along_wall.jpg",
+      "expected": {
+        "people": [
+          {"side": "left", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "left", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "center", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "center", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "right", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "right", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1},
+          {"side": "right", "distance": "medium", "motion": "standing", "direction": "unknown", "group": 1}
+        ]
+      }
+    }
+  ]
+}

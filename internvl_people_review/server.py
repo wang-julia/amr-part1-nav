@@ -21,7 +21,7 @@ from observations import evaluate_observation
 
 ROOT = Path(__file__).resolve().parent
 WEB_DIR = ROOT / "web"
-PROMPT_PATH = ROOT / "prompt.txt"
+PROMPT_PATH = ROOT / "prompt2.txt"
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
 MODEL_LOCK = Lock()
 

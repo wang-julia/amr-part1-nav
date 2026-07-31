@@ -40,7 +40,7 @@ def main() -> None:
     parser.add_argument(
         "--prompt",
         default=None,
-        help="Override the default prompt.txt content.",
+        help="Path to a prompt file to use instead of the default prompt.txt.",
     )
     parser.add_argument(
         "--temperature",
@@ -65,9 +65,12 @@ def main() -> None:
     batch_id = args.batch_id or secrets.token_hex(8)
     context: dict = {}
 
-    prompt_path = ROOT / "prompt.txt"
+    prompt_path = ROOT / "prompt2.txt"
     if args.prompt:
-        prompt = args.prompt
+        prompt_file = Path(args.prompt)
+        if not prompt_file.is_absolute():
+            prompt_file = ROOT / prompt_file
+        prompt = prompt_file.read_text(encoding="utf-8")
     elif prompt_path.exists():
         prompt = prompt_path.read_text(encoding="utf-8")
     else:

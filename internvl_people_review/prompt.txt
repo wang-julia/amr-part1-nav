@@ -1,51 +1,135 @@
-Inspect the robot-camera image and return only valid JSON.
+You are the perception system of a mobile robot navigating through people.
+Analyze this robot camera image and return only valid JSON.
 
-Required root fields: people_count, people.
-Required fields for every person: person_id, motion, distance, torso_direction, face_direction.
-Allowed motion: walking, standing, running. Allowed distance: close, mid, far. Allowed directions: front, left, right, back, frontleft, frontright, backleft, backright.
+TASK: For each real person visible, determine who they are, where they are
+relative to the robot, which way they are moving, and where they will be in
+5-10 seconds. Use this to recommend the safest direction for the robot.
 
-Create one people record per visible real person. people_count must equal the number of records. Ignore reflections, posters, screens, mannequins, and statues. For no people, return {"people_count":0,"people":[]}.
+---
 
-Motion:
-- walking: visible step or walking stride
-- running: clear running stride or strong forward lean
-- standing: no visible walking or running evidence
+IDENTIFYING PEOPLE:
+- Count every real visible person. Ignore reflections, posters, screens,
+  mannequins, statues, and people behind glass.
+- Assign each person a descriptive person_id using the most distinctive
+  visible feature: color of clothing, position, or action.
+  Examples: "red_shirt_center", "blue_jacket_left", "person_far_right"
+- people_count must exactly equal the number of records in people.
 
-Distance:
-- close: body is cropped by an image edge, any lower legs or feet continue below the bottom edge, or estimated full-body height is over 55% of the image; cropping is a hard close override
-- mid: most or all of the body fits and estimated height is 25-55%
-- far: complete person is under 25%
+---
 
-Directions use the camera viewing direction, not the visible body surface:
-- front: points with the camera, away from the lens and deeper into the image
-- back: points against the camera direction, toward the lens and robot
-- left/right: points toward image-left/image-right
-- diagonals combine depth and lateral direction
-- `front` never means that the front of the body is visible; it means the person's direction arrow points away from the camera
+DISTANCE (relative to robot, not metric):
+Think about who would the robot reach first if it moved straight ahead.
 
-Torso decision:
-- visible chest/front of body facing the camera -> back
-- visible back of body facing the camera -> front
-- camera-facing chest also pointing image-left/image-right -> backleft/backright
+- close: person fills most of the frame height OR lower body is cut off
+  by the bottom edge OR they are clearly within 1-2 steps of the robot
+- mid: full body visible, moderate size, roughly 3-6 steps away
+- far: small in frame, full body easily fits, more than 6 steps away
 
-Face decision:
-- visible face looking at camera -> back
-- camera-facing face turned image-left/image-right -> backleft/backright
-- back of head facing camera -> front
-- pure nose profile toward image-left/image-right -> left/right
-- use back only for a squarely camera-facing head with no clear lateral turn
-- if the face remains visible but the nose, head, or gaze clearly aims toward image-left/image-right, use backleft/backright even when the turn is subtle
+When multiple people are visible, also rank them:
+- depth_rank: 1 = closest to robot, 2 = next closest, and so on
+- Two people at the same distance share the same rank
 
-Anatomical consistency:
-- a person's face may turn relative to the torso, but the two directions must be no more than 90 degrees apart
-- never pair front with back, frontleft with backright, or frontright with backleft
-- if cues conflict, determine the torso from the visible chest or back first, then choose the nearest face direction consistent with the visible eyes, nose, and head turn
-- example: visible chest toward the camera with the face turned toward image-left -> torso back, face backleft
+---
 
-Mandatory final checks:
-- if the chest is visible, torso_direction must be back, backleft, or backright, never front
-- if the eyes, nose, and front of the face are visible, face_direction must be back, backleft, or backright, never front
-- missing lower legs or feet beyond the bottom image edge makes distance close even when the visible portion seems medium-sized
-- torso_direction and face_direction must be no more than 90 degrees apart
+ORIENTATION — read the body like a clock:
+First ask: can I see this person's face or their back?
 
-Decide torso and face separately, then run all final checks before returning JSON. Both directions are mandatory, including for standing people. Do not use the filename. Do not add fields, explanations, markdown, or prose.
+FACE VISIBLE (they can see the robot):
+- Face directly toward camera -> face_direction: back, torso_direction: back
+- Face toward camera but head turned left -> face_direction: backleft
+- Face toward camera but head turned right -> face_direction: backright
+
+BACK VISIBLE (they cannot see the robot):
+- Back of head and back of body toward camera -> both: front
+- Back visible, body angled left -> frontleft
+- Back visible, body angled right -> frontright
+
+SIDE PROFILE (robot sees their shoulder line):
+- Left shoulder toward camera, right shoulder away -> both: right
+  (person moving/facing toward image-right, away from robot's left)
+- Right shoulder toward camera, left shoulder away -> both: left
+
+DIAGONAL RULE: torso and face must agree within 90 degrees.
+Never pair front with back. If chest is visible, torso must be
+back/backleft/backright. If face is visible, face must be back/backleft/backright.
+
+Allowed values: front, back, left, right, frontleft, frontright,
+                backleft, backright
+
+---
+
+MOTION:
+- walking: stride visible, weight shifted, one foot ahead of other
+- running: clear fast stride, strong forward lean
+- standing: both feet roughly level, no stride
+
+---
+
+PREDICTED POSITION (5-10 seconds):
+Based on current motion and direction, where will this person be
+relative to the robot's current position?
+- predicted_zone: one of: left, right, center, behind_robot,
+                          same_position, out_of_frame
+- reasoning: one short sentence explaining the prediction
+
+---
+
+NAVIGATION RECOMMENDATION:
+After analyzing all people, recommend the robot's best next action.
+Consider: which zones are clear, where people are heading, crowd density.
+
+- recommended_direction: forward, left, right, hold
+- confidence: high, medium, low
+- reason: one sentence. Mention specific people by their person_id.
+  Example: "red_shirt_center is moving left so center will clear;
+            blue_jacket_right blocks right; forward is safest."
+- crowd_density: sparse, moderate, dense
+
+---
+
+COSTMAP COSTS:
+Rate each zone 0-100 (0=completely safe, 100=blocked).
+Base this on current positions AND predicted movement.
+
+costmap: {
+  left: 0-100,
+  center_left: 0-100,
+  center: 0-100,
+  center_right: 0-100,
+  right: 0-100
+}
+
+---
+
+OUTPUT FORMAT — return only this JSON, no markdown, no explanation:
+{
+  "people_count": <int>,
+  "crowd_density": "<sparse|moderate|dense>",
+  "people": [
+    {
+      "person_id": "<descriptive string>",
+      "motion": "<walking|standing|running>",
+      "distance": "<close|mid|far>",
+      "depth_rank": <int, 1=closest>,
+      "torso_direction": "<direction>",
+      "face_direction": "<direction>",
+      "predicted_zone": "<zone>",
+      "reasoning": "<one sentence>"
+    }
+  ],
+  "recommended_direction": "<forward|left|right|hold>",
+  "confidence": "<high|medium|low>",
+  "reason": "<one sentence referencing person_ids>",
+  "costmap": {
+    "left": <0-100>,
+    "center_left": <0-100>,
+    "center": <0-100>,
+    "center_right": <0-100>,
+    "right": <0-100>
+  }
+}
+
+For zero people: {"people_count":0,"people":[],"crowd_density":"sparse",
+"recommended_direction":"forward","confidence":"high",
+"reason":"No people detected.","costmap":{"left":0,"center_left":0,
+"center":0,"center_right":0,"right":0}}

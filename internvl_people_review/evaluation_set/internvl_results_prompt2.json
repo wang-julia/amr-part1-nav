@@ -1,0 +1,1520 @@
+{
+  "batch_id": "acb34b38885decb9",
+  "created_at": "2026-07-29T12:58:02.028511+00:00",
+  "model": "OpenGVLab/InternVL2_5-4B",
+  "temperature": 0.35,
+  "prompt": "You are the perception system of a mobile robot navigating through people.\nAnalyze this robot camera image and return only valid JSON.\n\nTASK: For each real person visible, determine who they are, where they are\nrelative to the robot, which way they are moving, and where they will be in\n5-10 seconds. Use this to recommend the safest direction for the robot.\n\n---\n\nIDENTIFYING PEOPLE:\n- Count every real visible person. Ignore reflections, posters, screens,\n  mannequins, statues, and people behind glass.\n- Assign each person a descriptive person_id using the most distinctive\n  visible feature: color of clothing, position, or action.\n  Examples: \"red_shirt_center\", \"blue_jacket_left\", \"person_far_right\"\n- people_count must exactly equal the number of records in people.\n\n---\n\nDISTANCE (relative to robot, not metric):\nThink about who would the robot reach first if it moved straight ahead.\n\n- close: person fills most of the frame height OR lower body is cut off\n  by the bottom edge OR they are clearly within 1-2 steps of the robot\n- mid: full body visible, moderate size, roughly 3-6 steps away\n- far: small in frame, full body easily fits, more than 6 steps away\n\nWhen multiple people are visible, also rank them:\n- depth_rank: 1 = closest to robot, 2 = next closest, and so on\n- Two people at the same distance share the same rank\n\n---\n\nORIENTATION \u2014 read the body like a clock:\nFirst ask: can I see this person's face or their back?\n\nFACE VISIBLE (they can see the robot):\n- Face directly toward camera -> face_direction: back, torso_direction: back\n- Face toward camera but head turned left -> face_direction: backleft\n- Face toward camera but head turned right -> face_direction: backright\n\nBACK VISIBLE (they cannot see the robot):\n- Back of head and back of body toward camera -> both: front\n- Back visible, body angled left -> frontleft\n- Back visible, body angled right -> frontright\n\nSIDE PROFILE (robot sees their shoulder line):\n- Left shoulder toward camera, right shoulder away -> both: right\n  (person moving/facing toward image-right, away from robot's left)\n- Right shoulder toward camera, left shoulder away -> both: left\n\nDIAGONAL RULE: torso and face must agree within 90 degrees.\nNever pair front with back. If chest is visible, torso must be\nback/backleft/backright. If face is visible, face must be back/backleft/backright.\n\nAllowed values: front, back, left, right, frontleft, frontright,\n                backleft, backright\n\n---\n\nMOTION:\n- walking: stride visible, weight shifted, one foot ahead of other\n- running: clear fast stride, strong forward lean\n- standing: both feet roughly level, no stride\n\n---\n\nPREDICTED POSITION (5-10 seconds):\nBased on current motion and direction, where will this person be\nrelative to the robot's current position?\n- predicted_zone: one of: left, right, center, behind_robot,\n                          same_position, out_of_frame\n- reasoning: one short sentence explaining the prediction\n\n---\n\nNAVIGATION RECOMMENDATION:\nAfter analyzing all people, recommend the robot's best next action.\nConsider: which zones are clear, where people are heading, crowd density.\n\n- recommended_direction: forward, left, right, hold\n- confidence: high, medium, low\n- reason: one sentence. Mention specific people by their person_id.\n  Example: \"red_shirt_center is moving left so center will clear;\n            blue_jacket_right blocks right; forward is safest.\"\n- crowd_density: sparse, moderate, dense\n\n---\n\nCOSTMAP COSTS:\nRate each zone 0-100 (0=completely safe, 100=blocked).\nBase this on current positions AND predicted movement.\n\ncostmap: {\n  left: 0-100,\n  center_left: 0-100,\n  center: 0-100,\n  center_right: 0-100,\n  right: 0-100\n}\n\n---\n\nOUTPUT FORMAT \u2014 return only this JSON, no markdown, no explanation:\n{\n  \"people_count\": <int>,\n  \"crowd_density\": \"<sparse|moderate|dense>\",\n  \"people\": [\n    {\n      \"person_id\": \"<descriptive string>\",\n      \"motion\": \"<walking|standing|running>\",\n      \"distance\": \"<close|mid|far>\",\n      \"depth_rank\": <int, 1=closest>,\n      \"torso_direction\": \"<direction>\",\n      \"face_direction\": \"<direction>\",\n      \"predicted_zone\": \"<zone>\",\n      \"reasoning\": \"<one sentence>\"\n    }\n  ],\n  \"recommended_direction\": \"<forward|left|right|hold>\",\n  \"confidence\": \"<high|medium|low>\",\n  \"reason\": \"<one sentence referencing person_ids>\",\n  \"costmap\": {\n    \"left\": <0-100>,\n    \"center_left\": <0-100>,\n    \"center\": <0-100>,\n    \"center_right\": <0-100>,\n    \"right\": <0-100>\n  }\n}\n\nFor zero people: {\"people_count\":0,\"people\":[],\"crowd_density\":\"sparse\",\n\"recommended_direction\":\"forward\",\"confidence\":\"high\",\n\"reason\":\"No people detected.\",\"costmap\":{\"left\":0,\"center_left\":0,\n\"center\":0,\"center_right\":0,\"right\":0}}",
+  "completed": [
+    {
+      "history_id": "6b4ac6cb46514e72baf0ac09fe5e2081",
+      "filename": "01_empty_corridor.jpg",
+      "elapsed_seconds": 48.07,
+      "semantic_json": {
+        "people_count": 0,
+        "crowd_density": "sparse",
+        "people": [],
+        "recommended_direction": "forward",
+        "confidence": "high",
+        "reason": "No people detected.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 0,
+        "person_records": 0,
+        "complete_records": 0,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "815d1ed20aae4688b6e57c319946ec1c",
+      "filename": "02_walking_right_towards.webp",
+      "elapsed_seconds": 69.5,
+      "semantic_json": {
+        "people_count": 2,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "white_shirt_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is walking towards the center."
+          },
+          {
+            "person_id": "black_shirt_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is walking towards the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "Both people are moving towards the center, leaving the left side clear.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 75,
+          "center_right": 25,
+          "right": 50
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "2d28ac2f86e5488daa3c77407110b4ec",
+      "filename": "03_walking_mid_mid_towards.jpg",
+      "elapsed_seconds": 115.17,
+      "semantic_json": {
+        "people_count": 4,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "white_shirt_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "white_shirt_left is moving left."
+          },
+          {
+            "person_id": "black_shirt_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "backleft",
+            "face_direction": "backleft",
+            "predicted_zone": "center",
+            "reasoning": "black_shirt_center is moving left."
+          },
+          {
+            "person_id": "green_jacket_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "backright",
+            "face_direction": "backright",
+            "predicted_zone": "center",
+            "reasoning": "green_jacket_center is moving left."
+          },
+          {
+            "person_id": "red_pants_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 4,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "red_pants_right is moving left."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "white_shirt_left and red_pants_right are moving left, leaving the center and right clear.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 50,
+          "center_right": 50,
+          "right": 50
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 4,
+        "person_records": 4,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer.",
+          "people[3] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[3].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "fd97dd2b02884be1ad7d57ac611a1fa4",
+      "filename": "04_standing_center_near.jpg",
+      "elapsed_seconds": 44.84,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "dark_hoodie_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "Person is standing still, likely to remain in the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person in 'dark_hoodie_center' is standing still and likely to remain in the center, so moving left is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 50,
+          "center_right": 50,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "9c40b3ebeef24877863ed85da7749972",
+      "filename": "05_standing_right_near.jpg",
+      "elapsed_seconds": 41.96,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "green_sweater_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is standing still, likely to remain in the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person in 'green_sweater_center' is standing still and likely to remain in the center, so moving left is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 50,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "0e3aafd796024ccfa27ff3e8f27babbf",
+      "filename": "06_standing_center_medium.jpg",
+      "elapsed_seconds": 26.59,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "person_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "Person is standing still, likely to remain in the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person in the center is standing still and will likely move left, clearing the center.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 100,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "bef3ab28c70547f1afcbc8df6473fd4d",
+      "filename": "07_walking_center_medium.jpg",
+      "elapsed_seconds": 26.39,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "person_far_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is walking towards the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person 'person_far_center' is moving towards the center, so moving left is safest.",
+        "costmap": {
+          "left": 100,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "2deb6a6aee844b2fa8663dfda67689f1",
+      "filename": "08_walking_right_near.jpg",
+      "elapsed_seconds": 27.16,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "man_far_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "right",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "The man is walking right, likely moving away from the robot."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The man_far_right is moving right, so the left side is clear; recommended to move left.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "0bbf03f65330423397f0762c6d82f2f2",
+      "filename": "09_walking_center_far.jpg",
+      "elapsed_seconds": 27.72,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "person_far_right",
+            "motion": "walking",
+            "distance": "far",
+            "depth_rank": 1,
+            "torso_direction": "right",
+            "face_direction": "backright",
+            "predicted_zone": "right",
+            "reasoning": "The person is moving away and will be on the right side in 5-10 seconds."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person_far_right is moving right, so left is clear; forward is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "fd7003b800664706845cadaf55f21613",
+      "filename": "10_four_mid_forward.jpg",
+      "elapsed_seconds": 77.29,
+      "semantic_json": {
+        "people_count": 4,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "pink_shirt_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "The person is walking towards the left."
+          },
+          {
+            "person_id": "blue_tee_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is walking straight ahead."
+          },
+          {
+            "person_id": "blue_shirt_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "The person is walking towards the right."
+          },
+          {
+            "person_id": "blue_jacket_right",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 4,
+            "torso_direction": "front",
+            "face_direction": "back",
+            "predicted_zone": "out_of_frame",
+            "reasoning": "The person is standing still."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The pink_shirt_left and blue_tee_center are walking left, while the blue_shirt_right is walking right. The robot should move left to avoid the left side.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 50,
+          "center_right": 50,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 4,
+        "person_records": 4,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer.",
+          "people[3] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[3].person_id must be a positive integer.",
+          "people[3].torso_direction and face_direction differ by 180 degrees; the anatomical limit is 90 degrees."
+        ]
+      }
+    },
+    {
+      "history_id": "7c0407591cf54e5e9721406f44e7c399",
+      "filename": "11_three_mid_forward.jpg",
+      "elapsed_seconds": 56.29,
+      "semantic_json": {
+        "people_count": 3,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "blue_shorts_left",
+            "motion": "running",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "Running to the left, will clear the area."
+          },
+          {
+            "person_id": "black_dress_center",
+            "motion": "running",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "Running straight ahead, will be in the center."
+          },
+          {
+            "person_id": "orange_sneakers_right",
+            "motion": "running",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "Running to the right, will be in the right."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The left path is clear with no people in the way.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "7f22d13f44b84452b64e68fb2a9d7ccc",
+      "filename": "12_walking_mid_back.jpg",
+      "elapsed_seconds": 32.37,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "person_far_right",
+            "motion": "walking",
+            "distance": "far",
+            "depth_rank": 1,
+            "torso_direction": "backright",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "The person is walking away, likely to the right."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person_far_right is moving away to the right, so moving left is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 75,
+          "center_right": 50,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "67e16e6acf8b415097ae7b25b6b97d18",
+      "filename": "13_group_standing_along_wall.jpg",
+      "elapsed_seconds": 98.27,
+      "semantic_json": {
+        "people_count": 6,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "brown_jacket_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "The person is standing still and facing away."
+          },
+          {
+            "person_id": "black_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is standing still and facing away."
+          },
+          {
+            "person_id": "black_hoodie_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is standing still and facing away."
+          },
+          {
+            "person_id": "white_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 4,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is standing still and facing away."
+          },
+          {
+            "person_id": "gray_hoodie_right",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 5,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "The person is standing still and facing away."
+          },
+          {
+            "person_id": "white_tee_right",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 6,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "The person is standing still and facing away."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The left side is clear with no people moving, while the center and right sides have people facing away.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 50,
+          "center_right": 50,
+          "right": 50
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 6,
+        "person_records": 6,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer.",
+          "people[3] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[3].person_id must be a positive integer.",
+          "people[4] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[4].person_id must be a positive integer.",
+          "people[5] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[5].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "9915c63b46a241198cf9f93aaa3292c9",
+      "filename": "14_four_walking_back.jpeg",
+      "elapsed_seconds": 74.63,
+      "semantic_json": {
+        "people_count": 4,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "yellow_top_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "yellow_top_left is moving left, clear space to the left."
+          },
+          {
+            "person_id": "blue_jacket_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "blue_jacket_left is moving left, clear space to the left."
+          },
+          {
+            "person_id": "white_top_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "white_top_center is moving left, clear space to the left."
+          },
+          {
+            "person_id": "black_bag_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 4,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "black_bag_right is moving left, clear space to the left."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "yellow_top_left, blue_jacket_left, white_top_center, and black_bag_right are all moving left, providing clear space to the left.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 4,
+        "person_records": 4,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer.",
+          "people[3] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[3].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "7687874d39db4a75a7d8802eb92e1d4f",
+      "filename": "15_two_stand_foward.jpg",
+      "elapsed_seconds": 40.22,
+      "semantic_json": {
+        "people_count": 2,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "man_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The man is standing still, likely to stay in the center."
+          },
+          {
+            "person_id": "woman_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The woman is standing still, likely to stay in the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The man and woman are standing still in the center, clear path to the left.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 80,
+          "center_right": 50,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "701fadd2ced845258a5970ecb6bbc3a5",
+      "filename": "16_walking_mid_forward.webp",
+      "elapsed_seconds": 30.04,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "black_shirt_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is walking toward the center of the hallway."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person in black_shirt_center is moving left, so the left side is clear; forward is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 100,
+          "center_right": 50,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "72d23e52d7634f328918a16f5c5dcdd1",
+      "filename": "17_walking_mid_right_front.jpg",
+      "elapsed_seconds": 28.92,
+      "semantic_json": {
+        "people_count": 1,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "person_far_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "person_far_right is walking towards the right, clear space ahead."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "person_far_right is moving towards the right, recommend moving left to avoid them.",
+        "costmap": {
+          "left": 0,
+          "center_left": 100,
+          "center": 50,
+          "center_right": 0,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "0f09b93874c44db7ba43c202ffc22f9b",
+      "filename": "18_three_mid_front.jpg",
+      "elapsed_seconds": 54.49,
+      "semantic_json": {
+        "people_count": 3,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "blue_shirt_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "blue_shirt_left is standing still, likely to remain in the center."
+          },
+          {
+            "person_id": "pink_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "pink_shirt_center is standing still, likely to remain in the center."
+          },
+          {
+            "person_id": "green_shirt_right",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "green_shirt_right is standing still, likely to remain in the center."
+          }
+        ],
+        "recommended_direction": "right",
+        "confidence": "high",
+        "reason": "blue_shirt_left and pink_shirt_center are standing still, while green_shirt_right is also likely to remain in the center. Moving right is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "2b1d135b704a4887b071869e27808d59",
+      "filename": "19_three_left_front.jpeg",
+      "elapsed_seconds": 52.11,
+      "semantic_json": {
+        "people_count": 3,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "red_shirt_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "red_shirt_center is walking towards the center."
+          },
+          {
+            "person_id": "white_dress_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "white_dress_right is walking towards the center."
+          },
+          {
+            "person_id": "floral_dress_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "floral_dress_left is walking towards the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "red_shirt_center and white_dress_right are moving towards the center, leaving the left side clear.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 100,
+          "center_right": 50,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "90dc107fc7be4cd99d5dd80ead505280",
+      "filename": "20_three_sit_kid.webp",
+      "elapsed_seconds": 47.14,
+      "semantic_json": {
+        "people_count": 3,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "red_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "Person is standing still, likely to stay in the center."
+          },
+          {
+            "person_id": "blue_jacket_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "left",
+            "face_direction": "backleft",
+            "predicted_zone": "center_left",
+            "reasoning": "Person is standing still, likely to stay in the center-left."
+          },
+          {
+            "person_id": "white_shirt_far",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center_right",
+            "reasoning": "Person is standing still, likely to stay in the center-right."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The left side is clear with no people moving, making it the safest direction.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "3c174008b90048c692c5c532684eca4c",
+      "filename": "21_crowd_leftopen.jpg",
+      "elapsed_seconds": 71.71,
+      "semantic_json": {
+        "people_count": 5,
+        "crowd_density": "moderate",
+        "people": [
+          {
+            "person_id": "blue_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "blue_shirt_center is standing still, likely to stay in the center."
+          },
+          {
+            "person_id": "blue_jacket_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "blue_jacket_left is standing still, likely to stay in the center."
+          },
+          {
+            "person_id": "black_shirt_far_right",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 3,
+            "torso_direction": "front",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "black_shirt_far_right is standing still, likely to stay in the right."
+          },
+          {
+            "person_id": "child_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "child_center is standing still, likely to stay in the center."
+          },
+          {
+            "person_id": "woman_far_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 4,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "woman_far_left is standing still, likely to stay in the left."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "medium",
+        "reason": "woman_far_left is moving left, blue_shirt_center and blue_jacket_left are standing still, and child_center is likely to stay in the center; left is safest.",
+        "costmap": {
+          "left": 50,
+          "center_left": 0,
+          "center": 0,
+          "center_right": 0,
+          "right": 75
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 5,
+        "person_records": 5,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer.",
+          "people[2].torso_direction and face_direction differ by 180 degrees; the anatomical limit is 90 degrees.",
+          "people[3] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[3].person_id must be a positive integer.",
+          "people[4] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[4].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "53af65b58c5d47f7af5da7c686123214",
+      "filename": "22_crowd_middleopen.jpg",
+      "elapsed_seconds": 78.85,
+      "semantic_json": {
+        "people_count": 6,
+        "crowd_density": "moderate",
+        "people": [
+          {
+            "person_id": "red_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "Person is standing still, likely to stay in the center."
+          },
+          {
+            "person_id": "blue_jacket_right",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "right",
+            "face_direction": "back",
+            "predicted_zone": "center_right",
+            "reasoning": "Person is standing still, likely to stay in the center-right."
+          },
+          {
+            "person_id": "black_shirt_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "left",
+            "face_direction": "back",
+            "predicted_zone": "center_left",
+            "reasoning": "Person is standing still, likely to stay in the center-left."
+          },
+          {
+            "person_id": "yellow_shirt_far_right",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 4,
+            "torso_direction": "right",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "Person is standing still, likely to stay in the right."
+          },
+          {
+            "person_id": "blue_shirt_far_right",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 5,
+            "torso_direction": "right",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "Person is standing still, likely to stay in the right."
+          },
+          {
+            "person_id": "blue_shirt_far_left",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 6,
+            "torso_direction": "left",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "Person is standing still, likely to stay in the left."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "medium",
+        "reason": "People are standing still, with the left side being the safest direction.",
+        "costmap": {
+          "left": 50,
+          "center_left": 30,
+          "center": 40,
+          "center_right": 20,
+          "right": 10
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 6,
+        "person_records": 6,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer.",
+          "people[3] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[3].person_id must be a positive integer.",
+          "people[4] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[4].person_id must be a positive integer.",
+          "people[5] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[5].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "28c50d04fee247949569a9944f58d5f2",
+      "filename": "23_woman_kid_sit.jpeg",
+      "elapsed_seconds": 46.31,
+      "semantic_json": {
+        "people_count": 2,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "red_shirt_center",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "Person is standing still, likely to remain in the center."
+          },
+          {
+            "person_id": "white_shirt_left",
+            "motion": "standing",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "left",
+            "face_direction": "back",
+            "predicted_zone": "center_left",
+            "reasoning": "Person is standing still, likely to remain in the center-left."
+          }
+        ],
+        "recommended_direction": "right",
+        "confidence": "high",
+        "reason": "Red_shirt_center is standing still and white_shirt_left is in the center-left; moving right is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 100,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "6d98f7691fd14a74bb819c0fda8acc88",
+      "filename": "24_kid_leftopen.jpg",
+      "elapsed_seconds": 39.4,
+      "semantic_json": {
+        "people_count": 2,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "blue_jacket_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "left",
+            "reasoning": "blue_jacket_left is walking toward the left."
+          },
+          {
+            "person_id": "blue_jacket_right",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "backleft",
+            "face_direction": "backleft",
+            "predicted_zone": "right",
+            "reasoning": "blue_jacket_right is walking toward the right."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "blue_jacket_left is moving left so left will clear; blue_jacket_right blocks right; left is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 75,
+          "center_right": 50,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "aa7ab6e3cf8e4f23a6fffed237214413",
+      "filename": "25_two_walking_back.webp",
+      "elapsed_seconds": 38.65,
+      "semantic_json": {
+        "people_count": 2,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "white_hair_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "The person is walking towards the center of the hallway."
+          },
+          {
+            "person_id": "blue_shirt_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 2,
+            "torso_direction": "backleft",
+            "face_direction": "backleft",
+            "predicted_zone": "center_left",
+            "reasoning": "The person is walking towards the left side of the hallway."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "The person in 'blue_shirt_left' is moving left, so left is clear; 'white_hair_center' is moving towards the center.",
+        "costmap": {
+          "left": 0,
+          "center_left": 0,
+          "center": 50,
+          "center_right": 0,
+          "right": 0
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer."
+        ]
+      }
+    },
+    {
+      "history_id": "a307f91fb0de498c99a6aec923365481",
+      "filename": "26_three_nospace.jpg",
+      "elapsed_seconds": 49.84,
+      "semantic_json": {
+        "people_count": 3,
+        "crowd_density": "sparse",
+        "people": [
+          {
+            "person_id": "white_sweater_left",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 1,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "white_sweater_left is walking towards the center."
+          },
+          {
+            "person_id": "yellow_shirt_far",
+            "motion": "standing",
+            "distance": "far",
+            "depth_rank": 2,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "right",
+            "reasoning": "yellow_shirt_far is standing still, blocking the right."
+          },
+          {
+            "person_id": "pink_dress_center",
+            "motion": "walking",
+            "distance": "mid",
+            "depth_rank": 3,
+            "torso_direction": "back",
+            "face_direction": "back",
+            "predicted_zone": "center",
+            "reasoning": "pink_dress_center is walking towards the center."
+          }
+        ],
+        "recommended_direction": "left",
+        "confidence": "high",
+        "reason": "pink_dress_center is moving left so center will clear; white_sweater_left blocks right; left is safest.",
+        "costmap": {
+          "left": 0,
+          "center_left": 50,
+          "center": 80,
+          "center_right": 100,
+          "right": 100
+        }
+      },
+      "evaluation": {
+        "valid": false,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 0,
+        "issues": [
+          "people[0] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[0].person_id must be a positive integer.",
+          "people[1] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[1].person_id must be a positive integer.",
+          "people[2] has unexpected fields: depth_rank, predicted_zone, reasoning.",
+          "people[2].person_id must be a positive integer."
+        ]
+      }
+    }
+  ],
+  "failures": []
+}

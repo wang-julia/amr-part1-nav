@@ -78,9 +78,7 @@ def load_model(model_id: str, local_files_only: bool = False):
         trust_remote_code=True,
         use_flash_attn=False,
         local_files_only=local_files_only,
-    ).eval()
-    if device != "cuda":
-        model = model.to(device)
+    ).eval().to(device)
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,

@@ -1,0 +1,22 @@
+{
+  "coordinate_frame": {
+    "front": "same direction as the camera, deeper into the image",
+    "back": "toward the camera and robot",
+    "left": "toward image-left",
+    "right": "toward image-right"
+  },
+  "images": {
+    "04_standing_center_near.jpg": {
+      "people_count": 1,
+      "people": [
+        {
+          "person_id": 1,
+          "motion": "standing",
+          "distance": "close",
+          "torso_direction": "back",
+          "face_direction": "backleft"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,51 @@
+Inspect the robot-camera image and return only valid JSON.
+
+Required root fields: people_count, people.
+Required fields for every person: person_id, motion, distance, torso_direction, face_direction.
+Allowed motion: walking, standing, running. Allowed distance: close, mid, far. Allowed directions: front, left, right, back, frontleft, frontright, backleft, backright.
+
+Create one people record per visible real person. people_count must equal the number of records. Ignore reflections, posters, screens, mannequins, and statues. For no people, return {"people_count":0,"people":[]}.
+
+Motion:
+- walking: visible step or walking stride
+- running: clear running stride or strong forward lean
+- standing: no visible walking or running evidence
+
+Distance:
+- close: body is cropped by an image edge, any lower legs or feet continue below the bottom edge, or estimated full-body height is over 55% of the image; cropping is a hard close override
+- mid: most or all of the body fits and estimated height is 25-55%
+- far: complete person is under 25%
+
+Directions use the camera viewing direction, not the visible body surface:
+- front: points with the camera, away from the lens and deeper into the image
+- back: points against the camera direction, toward the lens and robot
+- left/right: points toward image-left/image-right
+- diagonals combine depth and lateral direction
+- `front` never means that the front of the body is visible; it means the person's direction arrow points away from the camera
+
+Torso decision:
+- visible chest/front of body facing the camera -> back
+- visible back of body facing the camera -> front
+- camera-facing chest also pointing image-left/image-right -> backleft/backright
+
+Face decision:
+- visible face looking at camera -> back
+- camera-facing face turned image-left/image-right -> backleft/backright
+- back of head facing camera -> front
+- pure nose profile toward image-left/image-right -> left/right
+- use back only for a squarely camera-facing head with no clear lateral turn
+- if the face remains visible but the nose, head, or gaze clearly aims toward image-left/image-right, use backleft/backright even when the turn is subtle
+
+Anatomical consistency:
+- a person's face may turn relative to the torso, but the two directions must be no more than 90 degrees apart
+- never pair front with back, frontleft with backright, or frontright with backleft
+- if cues conflict, determine the torso from the visible chest or back first, then choose the nearest face direction consistent with the visible eyes, nose, and head turn
+- example: visible chest toward the camera with the face turned toward image-left -> torso back, face backleft
+
+Mandatory final checks:
+- if the chest is visible, torso_direction must be back, backleft, or backright, never front
+- if the eyes, nose, and front of the face are visible, face_direction must be back, backleft, or backright, never front
+- missing lower legs or feet beyond the bottom image edge makes distance close even when the visible portion seems medium-sized
+- torso_direction and face_direction must be no more than 90 degrees apart
+
+Decide torso and face separately, then run all final checks before returning JSON. Both directions are mandatory, including for standing people. Do not use the filename. Do not add fields, explanations, markdown, or prose.
