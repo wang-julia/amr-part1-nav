@@ -10,8 +10,10 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from detection_runtime import detect_people
 from history_store import save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
+from navigation import build_navigation
 from observations import evaluate_observation
 
 
@@ -59,13 +61,17 @@ def main() -> None:
         default=None,
         help="Only process filenames that contain this substring (case-insensitive).",
     )
+    parser.add_argument(
+        "--no-grounding",
+        action="store_true",
+        help="Skip YOLO/depth detection and run InternVL ungrounded (for A/B comparison).",
+    )
     args = parser.parse_args()
 
     model_id = os.environ.get("INTERNVL_MODEL", DEFAULT_MODEL)
     batch_id = args.batch_id or secrets.token_hex(8)
-    context: dict = {}
 
-    prompt_path = ROOT / "prompt2.txt"
+    prompt_path = ROOT / "prompt.txt"
     if args.prompt:
         prompt_file = Path(args.prompt)
         if not prompt_file.is_absolute():
@@ -101,6 +107,23 @@ def main() -> None:
         started = time.perf_counter()
         print(f"[{index}/{len(images)}] {image_path.name}", flush=True)
         try:
+            # YOLO + Depth are authoritative for people/position/depth and feed the
+            # VLM as detected_people; the VLM only reads background + builds the
+            # costmap + picks a heading (see prompt.txt). --no-grounding skips the
+            # injection (the VLM gets no sensor help) for comparison.
+            detected = detect_people(image_path)
+            context: dict = {}
+            if detected and not args.no_grounding:
+                context["detected_people"] = [
+                    {
+                        "id": d["id"],
+                        "zone": d["zone"],
+                        "depth": d["depth"],
+                        "depth_rank": d["depth_rank"],
+                    }
+                    for d in detected
+                ]
+
             raw_result = run_inference(
                 image_path=image_path,
                 base_prompt=prompt,
@@ -112,7 +135,7 @@ def main() -> None:
                 max_new_tokens=int(os.environ.get("INTERNVL_MAX_NEW_TOKENS", "640")),
                 local_files_only=os.environ.get("INTERNVL_LOCAL_FILES_ONLY", "0") == "1",
             )
-            semantic_json = raw_result
+            semantic_json = build_navigation(raw_result, detected)
             evaluation = evaluate_observation(semantic_json)
             elapsed = round(time.perf_counter() - started, 2)
             entry = save_run(
@@ -130,6 +153,7 @@ def main() -> None:
                 seed=seed,
                 temperature=args.temperature,
                 elapsed_seconds=elapsed,
+                detections=detected,
             )
             completed.append(
                 {
@@ -138,6 +162,7 @@ def main() -> None:
                     "elapsed_seconds": elapsed,
                     "semantic_json": semantic_json,
                     "evaluation": evaluation,
+                    "detections": detected,
                 }
             )
             print(f"  saved {entry['id']} in {elapsed:.2f}s", flush=True)
@@ -151,6 +176,7 @@ def main() -> None:
         "model": model_id,
         "temperature": args.temperature,
         "prompt": prompt,
+        "grounding_enabled": not args.no_grounding,
         "completed": completed,
         "failures": failures,
     }

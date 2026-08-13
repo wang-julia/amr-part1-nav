@@ -81,6 +81,15 @@ limited" or "narrow corridor" for an obviously wide space is wrong.
 
 IDENTIFYING PEOPLE:
 
+If the scene context below includes a "detected_people" list, treat it as a
+lower bound: those are real people found by an independent sensor, each with
+a zone and depth_rank. Your people_count must be at least as large as that
+list's length, and every entry in "detected_people" must be reconciled with
+exactly one record in your people array (matching by zone and depth_rank).
+Do not silently drop a detected person. You may still report additional
+people the sensor missed, and you may correct a detected zone or depth_rank
+if the image clearly shows otherwise — if you do, say so in reason.
+
 - Count every real visible person.
 - Ignore reflections, posters, screens, mannequins, statues, photos.
 - person_id: descriptive string using clothing + position.
@@ -153,6 +162,16 @@ MOTION:
 - running: strong forward lean, fast stride
 - standing: both feet level, no stride
 - sitting: seated — treat as stationary
+
+---
+
+CURRENT ZONE:
+Which of the five zones (left, center_left, center, center_right, right)
+is this person in right now? Use the same zone boundaries you used for
+COSTMAP below. This is their present position, separate from
+predicted_zone below, which is where they are heading next.
+
+zone: left, center_left, center, center_right, or right
 
 ---
 
@@ -249,6 +268,7 @@ OUTPUT — return only valid JSON, no markdown, no prose:
       "depth": "<near|mid|far>",
       "depth_rank": <int>,
       "torso_direction": "<front|back|left|right>",
+      "zone": "<left|center_left|center|center_right|right>",
       "predicted_zone": "<toward_robot|left|right|center|same_position>",
       "prediction_reason": "<one sentence>"
     }

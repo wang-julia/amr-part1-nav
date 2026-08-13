@@ -3,6 +3,7 @@
 import argparse
 import base64
 import json
+import mimetypes
 import os
 import secrets
 import tempfile
@@ -14,14 +15,18 @@ from pathlib import Path
 from threading import Lock, Timer
 from urllib.parse import urlparse
 
+from detection_runtime import analyze_image, render_depth_heatmap
+from evaluate_folder import SUPPORTED_SUFFIXES
 from history_store import clear_runs, get_image, get_run, list_runs, save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
+from navigation import build_navigation
 from observations import evaluate_observation
 
 
 ROOT = Path(__file__).resolve().parent
 WEB_DIR = ROOT / "web"
-PROMPT_PATH = ROOT / "prompt2.txt"
+PROMPT_PATH = ROOT / "prompt.txt"
+EVALUATION_IMAGES_DIR = ROOT / "evaluation_set" / "images"
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
 MODEL_LOCK = Lock()
 
@@ -101,6 +106,28 @@ class ReviewHandler(SimpleHTTPRequestHandler):
         if path == "/api/history":
             self.send_json({"runs": list_runs()})
             return
+        if path == "/api/evaluation-images":
+            names = sorted(
+                p.name for p in EVALUATION_IMAGES_DIR.iterdir()
+                if p.suffix.lower() in SUPPORTED_SUFFIXES
+            ) if EVALUATION_IMAGES_DIR.is_dir() else []
+            self.send_json({"images": names})
+            return
+        if path.startswith("/api/evaluation-images/"):
+            name = Path(path.removeprefix("/api/evaluation-images/")).name
+            image_path = EVALUATION_IMAGES_DIR / name
+            if not image_path.is_file() or image_path.parent != EVALUATION_IMAGES_DIR:
+                self.send_error(HTTPStatus.NOT_FOUND)
+                return
+            content_type = mimetypes.guess_type(image_path.name)[0] or "application/octet-stream"
+            body = image_path.read_bytes()
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "private, max-age=31536000, immutable")
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if path.startswith("/api/history/") and path.endswith("/image"):
             run_id = path.removeprefix("/api/history/").removesuffix("/image").strip("/")
             image = get_image(run_id)
@@ -169,7 +196,22 @@ class ReviewHandler(SimpleHTTPRequestHandler):
             batch_id = str(request.get("batch_id") or secrets.token_hex(8))
             trial_index = max(1, int(request.get("trial_index", 1)))
             with MODEL_LOCK:
-                semantic_json = run_inference(
+                detections, depth_map, _, _ = analyze_image(image_path)
+                depth_heatmap_png = render_depth_heatmap(depth_map)
+                if detections:
+                    context = {
+                        **context,
+                        "detected_people": [
+                            {
+                                "id": d["id"],
+                                "zone": d["zone"],
+                                "depth": d["depth"],
+                                "depth_rank": d["depth_rank"],
+                            }
+                            for d in detections
+                        ],
+                    }
+                vlm_json = run_inference(
                     image_path=image_path,
                     base_prompt=prompt,
                     context=context,
@@ -180,6 +222,7 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                     max_new_tokens=int(os.environ.get("INTERNVL_MAX_NEW_TOKENS", "640")),
                     local_files_only=os.environ.get("INTERNVL_LOCAL_FILES_ONLY", "0") == "1",
                 )
+            semantic_json = build_navigation(vlm_json, detections)
             evaluation = evaluate_observation(semantic_json)
             elapsed_seconds = round(time.perf_counter() - started, 2)
             effective_prompt = compose_prompt(prompt, context)
@@ -198,11 +241,14 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                 seed=seed,
                 temperature=max(0.0, min(temperature, 1.5)),
                 elapsed_seconds=elapsed_seconds,
+                detections=detections,
             )
             self.send_json(
                 {
                     "semantic_json": semantic_json,
                     "evaluation": evaluation,
+                    "detections": detections,
+                    "depth_heatmap_base64": base64.b64encode(depth_heatmap_png).decode("ascii"),
                     "effective_prompt": effective_prompt,
                     "seed": seed,
                     "elapsed_seconds": elapsed_seconds,

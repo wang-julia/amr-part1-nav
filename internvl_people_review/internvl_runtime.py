@@ -14,7 +14,7 @@ _CACHE: dict[tuple, tuple] = {}
 def compose_prompt(base_prompt: str, context: dict) -> str:
     parts = [base_prompt.strip()]
     if context:
-        parts.append("Optional cart context:\n" + json.dumps(context, indent=2))
+        parts.append("Optional scene context:\n" + json.dumps(context, indent=2))
     parts.append("Return only the requested valid JSON object.")
     return "\n\n".join(parts)
 
@@ -24,7 +24,13 @@ def extract_json(text: str) -> dict:
     fenced = re.search(r"```(?:json)?\s*(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
     if fenced:
         cleaned = fenced.group(1).strip()
-    known_keys = "people|people_count|person_id|motion|distance|torso_direction|face_direction"
+    known_keys = (
+        "environment_type|space_analysis|left_space|center_left_space|center_space|"
+        "center_right_space|right_space|space_notes|people|people_count|crowd_density|"
+        "person_id|is_cluster|approximate_count|motion|depth|depth_rank|torso_direction|zone|"
+        "predicted_zone|prediction_reason|costmap|left|center_left|center|center_right|"
+        "right|recommended_direction|recommended_angle|angle_reason|reason"
+    )
     cleaned = re.sub(rf'"({known_keys})\s*:', r'"\1":', cleaned)
     try:
         value = json.loads(cleaned)

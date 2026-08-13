@@ -57,6 +57,8 @@ def save_run(
     seed: int,
     temperature: float,
     elapsed_seconds: float,
+    detections: list | None = None,
+    detection_comparison: dict | None = None,
 ) -> dict[str, Any]:
     """Persist one independent model result and its source image."""
     run_id = uuid4().hex
@@ -82,6 +84,8 @@ def save_run(
         "context": context,
         "semantic_json": semantic_json,
         "evaluation": evaluation,
+        "detections": detections,
+        "detection_comparison": detection_comparison,
     }
     with HISTORY_LOCK:
         _ensure_directories()
@@ -101,8 +105,8 @@ def list_runs() -> list[dict[str, Any]]:
         semantic_json = entry.get("semantic_json", {})
         if not isinstance(semantic_json, dict):
             semantic_json = {}
-        people = semantic_json.get("people")
-        person_records = len(people) if isinstance(people, list) else 0
+        detections = entry.get("detections")
+        people_count = len(detections) if isinstance(detections, list) else 0
         evaluation = entry.get("evaluation")
         if not isinstance(evaluation, dict):
             evaluation = evaluate_observation(semantic_json)
@@ -114,8 +118,7 @@ def list_runs() -> list[dict[str, Any]]:
                 "created_at": entry.get("created_at"),
                 "filename": entry.get("filename", "unknown image"),
                 "model": entry.get("model", "unknown model"),
-                "people_count": semantic_json.get("people_count", 0),
-                "person_records": person_records,
+                "people_count": people_count,
                 "schema_valid": evaluation.get("valid", False),
                 "issue_count": len(evaluation.get("issues", [])),
                 "elapsed_seconds": entry.get("elapsed_seconds", 0),

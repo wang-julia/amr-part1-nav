@@ -4,3 +4,4 @@ timm
 einops
 pillow
 torchvision
+ultralytics
