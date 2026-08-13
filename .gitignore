@@ -14,6 +14,9 @@ build/
 # Jupyter
 .ipynb_checkpoints/
 
+# Model weights (auto-downloaded at runtime)
+*.pt
+
 # macOS
 .DS_Store
 

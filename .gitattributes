@@ -1,0 +1,5 @@
+# Generated demo dashboards (embedded base64 frames / build output) — exclude
+# from GitHub Linguist language stats and collapse in diffs so the repo reports
+# its real primary language (Python) instead of generated HTML.
+social_nav_demo/live_demo.html linguist-generated=true
+social_nav_demo/static_demo/*.html linguist-generated=true
