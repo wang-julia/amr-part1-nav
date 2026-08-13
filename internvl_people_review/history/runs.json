@@ -1,5 +1,159 @@
 [
   {
+    "id": "87150f0664df448490c9047bc85680cc",
+    "batch_id": "web-1786628061368",
+    "trial_index": 1,
+    "created_at": "2026-08-13T13:35:23.646504+00:00",
+    "filename": "03_walking_mid_mid_towards.jpg",
+    "image_file": "87150f0664df448490c9047bc85680cc.jpg",
+    "model": "OpenGVLab/InternVL2_5-4B",
+    "seed": 93287043,
+    "temperature": 0.25,
+    "elapsed_seconds": 62.27,
+    "prompt": "You are the navigation perception module of an autonomous mobile robot.\nReturn only valid JSON.\n\nPeople have already been detected by a separate sensor stack (listed in the\nscene context below as detected_people). IGNORE the people entirely for this\ntask \u2014 a downstream planner accounts for them separately. Your ONLY job is to\nread the permanent background and rate how much open floor the robot has in\neach of five vertical zones: left, center_left, center, center_right, right.\n\nFor each zone, imagine no people are present. Could the robot physically drive\nforward 2-3 meters into that zone?\n- open: clear floor or corridor ahead\n- narrow: passable but tight, under roughly one body-width of clearance\n- blocked: a wall, closed door, or fixed obstacle immediately ahead\n\nRate the physical environment ONLY:\n- A person standing in a zone does NOT make it blocked \u2014 ignore people.\n- A wall far in the background does NOT make a zone blocked when there is open\n  floor between the robot and that wall.\n\nenvironment_type: hallway, open_room, lobby, outdoor, doorway, or other.\n\nReturn ONLY this JSON, no markdown, no prose:\n{\n  \"environment_type\": \"<hallway|open_room|lobby|outdoor|doorway|other>\",\n  \"space_analysis\": {\n    \"left_space\": \"<open|narrow|blocked>\",\n    \"center_left_space\": \"<open|narrow|blocked>\",\n    \"center_space\": \"<open|narrow|blocked>\",\n    \"center_right_space\": \"<open|narrow|blocked>\",\n    \"right_space\": \"<open|narrow|blocked>\",\n    \"space_notes\": \"<one sentence on the navigable background layout>\"\n  }\n}",
+    "effective_prompt": "You are the navigation perception module of an autonomous mobile robot.\nReturn only valid JSON.\n\nPeople have already been detected by a separate sensor stack (listed in the\nscene context below as detected_people). IGNORE the people entirely for this\ntask \u2014 a downstream planner accounts for them separately. Your ONLY job is to\nread the permanent background and rate how much open floor the robot has in\neach of five vertical zones: left, center_left, center, center_right, right.\n\nFor each zone, imagine no people are present. Could the robot physically drive\nforward 2-3 meters into that zone?\n- open: clear floor or corridor ahead\n- narrow: passable but tight, under roughly one body-width of clearance\n- blocked: a wall, closed door, or fixed obstacle immediately ahead\n\nRate the physical environment ONLY:\n- A person standing in a zone does NOT make it blocked \u2014 ignore people.\n- A wall far in the background does NOT make a zone blocked when there is open\n  floor between the robot and that wall.\n\nenvironment_type: hallway, open_room, lobby, outdoor, doorway, or other.\n\nReturn ONLY this JSON, no markdown, no prose:\n{\n  \"environment_type\": \"<hallway|open_room|lobby|outdoor|doorway|other>\",\n  \"space_analysis\": {\n    \"left_space\": \"<open|narrow|blocked>\",\n    \"center_left_space\": \"<open|narrow|blocked>\",\n    \"center_space\": \"<open|narrow|blocked>\",\n    \"center_right_space\": \"<open|narrow|blocked>\",\n    \"right_space\": \"<open|narrow|blocked>\",\n    \"space_notes\": \"<one sentence on the navigable background layout>\"\n  }\n}\n\nOptional scene context:\n{\n  \"detected_people\": [\n    {\n      \"id\": \"detected_1\",\n      \"zone\": \"center_left\",\n      \"depth\": \"near\",\n      \"depth_rank\": 2\n    },\n    {\n      \"id\": \"detected_2\",\n      \"zone\": \"center_right\",\n      \"depth\": \"near\",\n      \"depth_rank\": 4\n    },\n    {\n      \"id\": \"detected_3\",\n      \"zone\": \"center\",\n      \"depth\": \"near\",\n      \"depth_rank\": 3\n    },\n    {\n      \"id\": \"detected_4\",\n      \"zone\": \"center_right\",\n      \"depth\": \"near\",\n      \"depth_rank\": 1\n    }\n  ]\n}\n\nReturn only the requested valid JSON object.",
+    "context": {
+      "detected_people": [
+        {
+          "id": "detected_1",
+          "zone": "center_left",
+          "depth": "near",
+          "depth_rank": 2
+        },
+        {
+          "id": "detected_2",
+          "zone": "center_right",
+          "depth": "near",
+          "depth_rank": 4
+        },
+        {
+          "id": "detected_3",
+          "zone": "center",
+          "depth": "near",
+          "depth_rank": 3
+        },
+        {
+          "id": "detected_4",
+          "zone": "center_right",
+          "depth": "near",
+          "depth_rank": 1
+        }
+      ]
+    },
+    "semantic_json": {
+      "environment_type": "hallway",
+      "space_analysis": {
+        "left_space": "open",
+        "center_left_space": "open",
+        "center_space": "open",
+        "center_right_space": "open",
+        "right_space": "open",
+        "space_notes": "The corridor is wide with no visible obstacles or walls in the immediate path."
+      },
+      "costmap": {
+        "left": 0,
+        "center_left": 60,
+        "center": 60,
+        "center_right": 100,
+        "right": 0
+      },
+      "recommended_direction": "left",
+      "recommended_angle": -72,
+      "reason": "left has the lowest cost (0); steering -72\u00b0 there, avoiding 4 detected person(s) in center, center_left, center_right."
+    },
+    "evaluation": {
+      "valid": true,
+      "issues": []
+    },
+    "detections": [
+      {
+        "id": "detected_1",
+        "bbox": [
+          96.8,
+          172.7,
+          242.8,
+          449.1
+        ],
+        "bbox_pct": [
+          14.3,
+          38.2,
+          35.8,
+          99.4
+        ],
+        "confidence": 0.94,
+        "zone": "center_left",
+        "bbox_center_x_pct": 25.0,
+        "depth_value": 3.862152099609375,
+        "depth_rank": 2,
+        "depth": "near"
+      },
+      {
+        "id": "detected_2",
+        "bbox": [
+          347.9,
+          160.0,
+          486.5,
+          448.1
+        ],
+        "bbox_pct": [
+          51.3,
+          35.4,
+          71.8,
+          99.1
+        ],
+        "confidence": 0.921,
+        "zone": "center_right",
+        "bbox_center_x_pct": 61.5,
+        "depth_value": 3.7646117210388184,
+        "depth_rank": 4,
+        "depth": "near"
+      },
+      {
+        "id": "detected_3",
+        "bbox": [
+          239.2,
+          202.5,
+          350.9,
+          450.2
+        ],
+        "bbox_pct": [
+          35.3,
+          44.8,
+          51.8,
+          99.6
+        ],
+        "confidence": 0.898,
+        "zone": "center",
+        "bbox_center_x_pct": 43.5,
+        "depth_value": 3.827312707901001,
+        "depth_rank": 3,
+        "depth": "near"
+      },
+      {
+        "id": "detected_4",
+        "bbox": [
+          473.5,
+          193.1,
+          596.1,
+          449.8
+        ],
+        "bbox_pct": [
+          69.8,
+          42.7,
+          87.9,
+          99.5
+        ],
+        "confidence": 0.898,
+        "zone": "center_right",
+        "bbox_center_x_pct": 78.9,
+        "depth_value": 3.893892288208008,
+        "depth_rank": 1,
+        "depth": "near"
+      }
+    ],
+    "detection_comparison": null
+  },
+  {
     "id": "9a669194fe2844ae8acc2ada81c646d0",
     "batch_id": "web-1786623796197",
     "trial_index": 1,
