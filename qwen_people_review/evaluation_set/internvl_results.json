@@ -1,0 +1,494 @@
+{
+  "batch_id": "5c4ada08c1807ca8",
+  "created_at": "2026-07-29T08:54:08.395215+00:00",
+  "model": "OpenGVLab/InternVL2_5-4B",
+  "temperature": 0.35,
+  "prompt": "Inspect the robot-camera image and return only valid JSON.\n\nRequired root fields: people_count, people.\nRequired fields for every person: person_id, motion, distance, torso_direction, face_direction.\nAllowed motion: walking, standing, running. Allowed distance: close, mid, far. Allowed directions: front, left, right, back, frontleft, frontright, backleft, backright.\n\nCreate one people record per visible real person. people_count must equal the number of records. Ignore reflections, posters, screens, mannequins, and statues. For no people, return {\"people_count\":0,\"people\":[]}.\n\nMotion:\n- walking: visible step or walking stride\n- running: clear running stride or strong forward lean\n- standing: no visible walking or running evidence\n\nDistance:\n- close: body is cropped by an image edge, any lower legs or feet continue below the bottom edge, or estimated full-body height is over 55% of the image; cropping is a hard close override\n- mid: most or all of the body fits and estimated height is 25-55%\n- far: complete person is under 25%\n\nDirections use the camera viewing direction, not the visible body surface:\n- front: points with the camera, away from the lens and deeper into the image\n- back: points against the camera direction, toward the lens and robot\n- left/right: points toward image-left/image-right\n- diagonals combine depth and lateral direction\n- `front` never means that the front of the body is visible; it means the person's direction arrow points away from the camera\n\nTorso decision:\n- visible chest/front of body facing the camera -> back\n- visible back of body facing the camera -> front\n- camera-facing chest also pointing image-left/image-right -> backleft/backright\n\nFace decision:\n- visible face looking at camera -> back\n- camera-facing face turned image-left/image-right -> backleft/backright\n- back of head facing camera -> front\n- pure nose profile toward image-left/image-right -> left/right\n- use back only for a squarely camera-facing head with no clear lateral turn\n- if the face remains visible but the nose, head, or gaze clearly aims toward image-left/image-right, use backleft/backright even when the turn is subtle\n\nAnatomical consistency:\n- a person's face may turn relative to the torso, but the two directions must be no more than 90 degrees apart\n- never pair front with back, frontleft with backright, or frontright with backleft\n- if cues conflict, determine the torso from the visible chest or back first, then choose the nearest face direction consistent with the visible eyes, nose, and head turn\n- example: visible chest toward the camera with the face turned toward image-left -> torso back, face backleft\n\nMandatory final checks:\n- if the chest is visible, torso_direction must be back, backleft, or backright, never front\n- if the eyes, nose, and front of the face are visible, face_direction must be back, backleft, or backright, never front\n- missing lower legs or feet beyond the bottom image edge makes distance close even when the visible portion seems medium-sized\n- torso_direction and face_direction must be no more than 90 degrees apart\n\nDecide torso and face separately, then run all final checks before returning JSON. Both directions are mandatory, including for standing people. Do not use the filename. Do not add fields, explanations, markdown, or prose.\n",
+  "completed": [
+    {
+      "history_id": "a0483641a3bb4db6a67741983f102a55",
+      "filename": "01_empty_corridor.jpg",
+      "elapsed_seconds": 44.17,
+      "semantic_json": {
+        "people_count": 0,
+        "people": []
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 0,
+        "person_records": 0,
+        "complete_records": 0,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "eb9d1794482c4057a1bac9a5f2bd37d7",
+      "filename": "04_standing_center_near.jpg",
+      "elapsed_seconds": 18.55,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "032984bf2f394938b89124470f29568b",
+      "filename": "05_standing_right_near.jpg",
+      "elapsed_seconds": 18.24,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "c039681d77e849e28fa71d83b76a70ec",
+      "filename": "06_standing_center_medium.jpg",
+      "elapsed_seconds": 9.8,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "aa2b09464b654ad2855c258d68fe5d07",
+      "filename": "07_walking_center_medium.jpg",
+      "elapsed_seconds": 9.42,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "7a8d8f2314704ee3a7fc071e6516bb3f",
+      "filename": "08_walking_right_near.jpg",
+      "elapsed_seconds": 9.56,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "da6eb06c5853451891aeb2917a3938c2",
+      "filename": "09_walking_center_far.jpg",
+      "elapsed_seconds": 9.7,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "48e78cd72daf4e6b99be85ffdced3231",
+      "filename": "11_three_people_walking.jpg",
+      "elapsed_seconds": 20.98,
+      "semantic_json": {
+        "people_count": 3,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "running",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          },
+          {
+            "person_id": 2,
+            "motion": "running",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          },
+          {
+            "person_id": 3,
+            "motion": "running",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 3,
+        "person_records": 3,
+        "complete_records": 3,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "11408395f1d64b4786a58858ac462a93",
+      "filename": "13_group_standing_along_wall.jpg",
+      "elapsed_seconds": 40.37,
+      "semantic_json": {
+        "people_count": 7,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 2,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 3,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 4,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 5,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 6,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          },
+          {
+            "person_id": 7,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "front",
+            "face_direction": "front"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 7,
+        "person_records": 7,
+        "complete_records": 7,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "78e12986e76d41db995d9d06aee23834",
+      "filename": "2_walking_mid_mid_towards.jpg",
+      "elapsed_seconds": 20.21,
+      "semantic_json": {
+        "people_count": 2,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          },
+          {
+            "person_id": 2,
+            "motion": "walking",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 2,
+        "person_records": 2,
+        "complete_records": 2,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "e205795ae7e14a5bbcd69156837d5be7",
+      "filename": "4_walking_mid_mid_towards.jpg",
+      "elapsed_seconds": 27.95,
+      "semantic_json": {
+        "people_count": 4,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          },
+          {
+            "person_id": 2,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          },
+          {
+            "person_id": 3,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          },
+          {
+            "person_id": 4,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 4,
+        "person_records": 4,
+        "complete_records": 4,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "06c1fdc94cc046149d74732747a12e2c",
+      "filename": "standing_far_right_left.webp",
+      "elapsed_seconds": 11.17,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "bd8f23abe3644659bea2566983dec77c",
+      "filename": "standing_mid_left.avif",
+      "elapsed_seconds": 9.81,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "standing",
+            "distance": "close",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "77ac9c0c10c34f2f9f95c1815ce695d7",
+      "filename": "walking_far_mid_towards.jpg",
+      "elapsed_seconds": 9.43,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "8c4e863c63fa4f0899052cdeb40214e6",
+      "filename": "walking_mid_left_front.jpg",
+      "elapsed_seconds": 9.68,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "821b22e08e02425290ac173bd6482874",
+      "filename": "walking_mid_mid_front.jpg",
+      "elapsed_seconds": 9.7,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    },
+    {
+      "history_id": "ac183f2b0ca0459aa1ae6f0faf7c0b6a",
+      "filename": "walking_mid_right_front.jpg",
+      "elapsed_seconds": 9.6,
+      "semantic_json": {
+        "people_count": 1,
+        "people": [
+          {
+            "person_id": 1,
+            "motion": "walking",
+            "distance": "mid",
+            "torso_direction": "back",
+            "face_direction": "back"
+          }
+        ]
+      },
+      "evaluation": {
+        "valid": true,
+        "reported_people_count": 1,
+        "person_records": 1,
+        "complete_records": 1,
+        "issues": []
+      }
+    }
+  ],
+  "failures": []
+}
