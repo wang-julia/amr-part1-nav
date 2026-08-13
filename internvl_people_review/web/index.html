@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InternVL Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f0f4f8;
+      --panel: #ffffff;
+      --panel-2: #f5f8fb;
+      --line: #d0dae5;
+      --text: #0f1e2e;
+      --muted: #5a7490;
+      --accent: #0d9488;
+      --accent-dark: #ccfbf1;
+      --warn: #b45309;
+      --danger: #dc2626;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 15px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    .hidden { display: none !important; }
+    header { position: sticky; top: 0; z-index: 5; min-height: 56px; display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .96); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; white-space: nowrap; }
+    .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 5px; background: var(--accent); color: #031110; font-weight: 900; }
+    nav { display: flex; align-self: stretch; }
+    .nav-button { padding: 0 16px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+    .nav-button.active { color: var(--text); border-bottom-color: var(--accent); }
+    main { width: min(1500px, calc(100% - 32px)); margin: 18px auto 36px; }
+    .panel { border: 1px solid var(--line); border-radius: 7px; background: var(--panel); overflow: hidden; }
+    .section-title { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 15px; border-bottom: 1px solid var(--line); }
+    h1, h2, p { margin: 0; }
+    h1 { font-size: 18px; }
+    h2 { font-size: 15px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .review-column { display: flex; flex-direction: column; gap: 10px; }
+    .review-input-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 2px; }
+    .drop-zone { min-height: 300px; border-radius: 7px; display: grid; place-items: center; position: relative; cursor: pointer; background: #edf2f7; }
+    .drop-zone.dragging { outline: 2px solid var(--accent); outline-offset: -6px; }
+    .drop-empty { text-align: center; color: var(--muted); }
+    .drop-empty strong { display: block; color: var(--text); font-size: 18px; margin-bottom: 5px; }
+    #preview { display: none; width: 100%; height: 300px; object-fit: contain; border-radius: 7px; }
+    .filebar { min-height: 49px; display: flex; align-items: center; gap: 10px; padding: 8px 13px; border-top: 1px solid var(--line); }
+    .filebar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+    .filebar select { flex: 1; min-height: 38px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); color: inherit; }
+    .filebar.bare { border-top: 0; padding: 2px; }
+    textarea { width: 100%; resize: vertical; border: 0; outline: 0; background: #f8fafc; color: #0f1e2e; font: 13px/1.5 Consolas, monospace; letter-spacing: 0; }
+    #prompt { height: 220px; min-height: 150px; padding: 15px; }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+    .status { min-width: 0; flex: 1; color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .slider { display: flex; align-items: center; gap: 9px; color: var(--muted); white-space: nowrap; }
+    input[type="range"] { accent-color: var(--accent); }
+    .button { min-height: 38px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); cursor: pointer; font-weight: 700; }
+    .button:hover:not(:disabled) { border-color: #4b627e; }
+    .button.primary { border-color: #2e9b92; background: #287e77; color: #f4ffff; }
+    .button.danger { color: var(--danger); }
+    .button:disabled { cursor: not-allowed; opacity: .45; }
+    .dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .dual-grid .panel + .panel { margin: 0; }
+    .legend { padding: 8px 15px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+    .stack { margin-top: 12px; }
+    .space-strip, .costmap-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 13px 15px; }
+    .zone-cell { padding: 10px 8px; border-radius: 6px; text-align: center; }
+    .zone-cell span { display: block; font-size: 11px; text-transform: uppercase; opacity: .75; }
+    .zone-cell strong { display: block; margin-top: 3px; font-size: 13px; }
+    .zone-open { background: #dcfce7; color: #166534; }
+    .zone-narrow { background: #fef3c7; color: #92400e; }
+    .zone-blocked { background: #fee2e2; color: #991b1b; }
+    .space-notes { padding: 0 15px 13px; color: var(--muted); font-size: 13px; }
+    .angle-gauge { padding: 13px 15px; }
+    .angle-track { position: relative; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #dcfce7, #fef3c7 50%, #dcfce7); margin: 22px 6px 6px; }
+    .angle-tick { position: absolute; top: -14px; transform: translateX(-50%); font-size: 10px; color: var(--muted); }
+    .angle-marker { position: absolute; top: -7px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: var(--accent); border: 2px solid #ffffff; box-shadow: 0 0 0 1px var(--accent); }
+    .angle-caption { margin-top: 16px; font-size: 13px; }
+    .angle-caption strong { font-size: 15px; }
+    .overlay-wrap { position: relative; width: 100%; height: 360px; background: #edf2f7; }
+    .overlay-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .overlay-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .metric { padding: 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-2); }
+    .metric span, .metric strong { display: block; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .metric strong { margin-top: 3px; font-size: 19px; }
+    .validation { padding: 12px 15px; border-bottom: 1px solid var(--line); }
+    .validation.good { color: var(--success); }
+    .validation.bad { color: var(--danger); }
+    .validation ul { margin: 7px 0 0; padding-left: 20px; }
+    #peopleTable, #historyPeople { overflow-x: auto; }
+    .people-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+    .people-table th, .people-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); text-align: left; }
+    .people-table th { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .empty-table { padding: 42px 15px; color: var(--muted); text-align: center; }
+    /* history layout */
+    .history-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); min-height: calc(100vh - 112px); }
+    .history-sidebar { border-right: 1px solid var(--line); }
+    .history-list { max-height: calc(100vh - 166px); overflow-y: auto; }
+    .history-item { width: 100%; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; }
+    .history-item:hover, .history-item.active { background: var(--panel-2); }
+    .history-item.active { box-shadow: inset 3px 0 var(--accent); }
+    .history-thumb { width: 58px; height: 58px; object-fit: cover; border-radius: 4px; background: #e2e8f0; }
+    .history-item strong, .history-item span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item span { color: var(--muted); font-size: 12px; }
+    .history-detail { min-width: 0; }
+    .history-placeholder { min-height: 600px; display: grid; place-items: center; color: var(--muted); text-align: center; }
+    .history-content { padding: 14px; }
+    .history-grid { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(420px, 1.2fr); gap: 12px; }
+    .history-image { width: 100%; height: 360px; object-fit: contain; background: #edf2f7; }
+    .history-json { height: 360px; padding: 14px; resize: none; }
+    .history-table { margin-top: 12px; }
+    .prompt-history { margin-top: 12px; }
+    .prompt-history textarea { height: 285px; padding: 14px; resize: vertical; }
+    .badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge.pass { background: #dcfce7; color: var(--success); }
+    .badge.fail { background: #fee2e2; color: var(--danger); }
+    .badge.na { background: var(--panel-2); color: var(--muted); }
+    @media (max-width: 920px) {
+      main { width: min(100% - 18px, 760px); }
+      .history-grid, .history-layout, .dual-grid, .space-strip, .costmap-strip { grid-template-columns: 1fr; }
+      .history-sidebar { border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
+      .history-list { max-height: 320px; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .slider { justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <button class="nav-button active" id="reviewNav">Review</button>
+      <button class="nav-button" id="historyNav">History</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ── REVIEW ─────────────────────────────────────────────────── -->
+    <section id="reviewView">
+      <div class="review-column">
+        <div class="review-input-head"><h1>Upload Attachment</h1><span class="muted"></span></div>
+        <div class="filebar bare"><select id="imageSource"><option value="">Upload a new image…</option></select></div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/bmp,image/avif" hidden>
+          <div class="drop-empty" id="dropEmpty"><strong>Select a robot-camera image</strong><span>JPEG, PNG, WebP, BMP, or AVIF</span></div>
+          <img id="preview" alt="Selected robot-camera frame">
+        </div>
+        <div class="filebar bare"><button class="button" id="clearImage" disabled>Clear</button><span id="fileMeta">No image selected</span></div>
+
+        <div class="panel">
+          <div class="section-title"><h1>InternVL Prompt</h1><span class="muted">Editable before generation</span></div>
+          <textarea id="prompt" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="status" id="status">Select an image to begin.</div>
+        <label class="slider">Variation <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.25"><strong id="temperatureValue">0.25</strong></label>
+        <button class="button primary" id="runOnce" disabled>Run</button>
+      </div>
+
+      <div class="hidden" id="resultPanels">
+        <div class="dual-grid">
+          <div class="panel">
+            <div class="section-title"><h2>YOLO Detections</h2><span class="muted" id="resultDetCount"></span></div>
+            <div class="overlay-wrap"><img id="resultImage" alt="Camera frame"><canvas id="resultCanvas"></canvas></div>
+            <div class="legend">Boxes are YOLO person detections, labeled with zone and depth rank (1 = closest).</div>
+          </div>
+          <div class="panel">
+            <div class="section-title"><h2>Depth Map</h2><span class="muted">Depth-Anything-V2</span></div>
+            <div class="overlay-wrap"><img id="depthImage" alt="Colorized depth map"></div>
+            <div class="legend">Warmer colors are closer to the camera. Cooler colors are farther away.</div>
+          </div>
+        </div>
+
+        <div class="panel stack">
+          <div id="peopleTable"></div>
+        </div>
+
+        <div class="panel stack">
+          <div class="section-title"><div><h2>InternVL's Read of the Scene</h2><span class="muted" id="trialMeta"></span></div><span class="muted" id="envSummary"></span></div>
+          <div class="space-strip" id="spaceStrip"></div>
+          <div class="space-notes" id="spaceNotes"></div>
+          <div class="section-title"><h2>Costmap</h2><span class="muted">0 = clear, 100 = blocked</span></div>
+          <div class="costmap-strip" id="costmapStrip"></div>
+          <div class="section-title"><h2>Recommended Heading</h2></div>
+          <div class="angle-gauge" id="angleGauge"></div>
+        </div>
+
+        <div class="filebar bare stack"><button class="button" id="downloadResult">Download JSON</button></div>
+      </div>
+    </section>
+
+    <!-- ── HISTORY (latest run only) ─────────────────────────────── -->
+    <section class="panel hidden" id="historyView">
+      <div class="history-layout">
+        <aside class="history-sidebar">
+          <div class="section-title"><div><h1>History</h1><span class="muted" id="historyCount">0 results</span></div><button class="button" id="refreshHistory">Refresh</button></div>
+          <div class="history-list" id="historyList"></div>
+          <div class="filebar"><button class="button danger" id="clearHistory">Clear all history</button></div>
+        </aside>
+        <div class="history-detail">
+          <div class="history-placeholder" id="historyPlaceholder"><div><strong>Select a saved result</strong><br>Its image, observations, JSON, and prompt appear here.</div></div>
+          <div class="hidden" id="historyContent">
+            <div class="section-title"><div><h1 id="historyTitle">Saved result</h1><span class="muted" id="historyMeta"></span></div><button class="button" id="downloadHistory">Download record</button></div>
+            <div class="history-content">
+              <div class="history-grid">
+                <div class="panel"><div class="section-title"><h2>Source Image</h2><span class="muted" id="historyFilename"></span></div><img class="history-image" id="historyImage" alt="Saved source image"></div>
+                <div class="panel"><div class="section-title"><h2>Raw InternVL JSON</h2><span class="muted">Saved model response</span></div><textarea class="history-json" id="historyJson" readonly></textarea></div>
+              </div>
+              <div class="panel history-table"><div class="section-title"><h2>Core Observations</h2><span class="muted" id="historyValidationLabel"></span></div><div id="historyMetrics"></div><div id="historyValidation"></div><div id="historyPeople"></div></div>
+              <div class="panel prompt-history"><div class="section-title"><h2>Exact Prompt Used</h2><span class="muted">Includes any appended context and output instruction</span></div><textarea id="historyPrompt" readonly></textarea></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const state = {
+      filename: null, imageBase64: "", running: false,
+      result: null,
+      allRuns: [], activeHistory: null, historyRecord: null,
+    };
+
+    function statusText(msg, err = false) { $("status").textContent = msg; $("status").classList.toggle("error", err); }
+
+    function switchView(name) {
+      $("reviewView").classList.toggle("hidden", name !== "review");
+      $("historyView").classList.toggle("hidden", name !== "history");
+      $("reviewNav").classList.toggle("active", name === "review");
+      $("historyNav").classList.toggle("active", name === "history");
+      if (name === "history") loadAllHistory(true).catch((e) => alert(e.message));
+    }
+
+    function renderEvaluation(targetId, evaluation, labelId = "") {
+      const ev = evaluation || { valid: false, issues: ["No schema evaluation was saved."] };
+      const issues = Array.isArray(ev.issues) ? ev.issues : [];
+      if (labelId) $(labelId).textContent = ev.valid ? "Schema complete" : `${issues.length} issue${issues.length === 1 ? "" : "s"}`;
+      const el = $(targetId);
+      el.className = `validation ${ev.valid ? "good" : "bad"}`;
+      el.innerHTML = ev.valid
+        ? "<strong>Schema complete</strong> — environment, space analysis, costmap, and recommended heading are all present."
+        : `<strong>Check this response</strong>${issues.length ? `<ul>${issues.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>` : ""}`;
+    }
+
+    function metricCellsHtml(json) {
+      const cm = json?.costmap || {};
+      return `<div class="metric"><span>Environment</span><strong>${escapeHtml(json?.environment_type ?? "—")}</strong></div><div class="metric"><span>Recommended</span><strong>${escapeHtml(json?.recommended_direction ?? "—")} ${escapeHtml(json?.recommended_angle ?? "")}°</strong></div><div class="metric"><span>Costmap (L→R)</span><strong>${["left","center_left","center","center_right","right"].map((z) => cm[z] ?? "—").join(" / ")}</strong></div>`;
+    }
+
+    function peopleHtml(detections) {
+      const people = Array.isArray(detections) ? detections : [];
+      if (!people.length) return '<div class="empty-table">No people detected by YOLO.</div>';
+      return `<table class="people-table"><thead><tr><th>Person</th><th>Zone</th><th>Depth</th><th>Depth rank</th><th>Confidence</th></tr></thead><tbody>${people.map((p, i) => `<tr><td>${escapeHtml(p?.id ?? i + 1)}</td><td>${escapeHtml(p?.zone ?? "—")}</td><td>${escapeHtml(p?.depth ?? "—")}</td><td>${escapeHtml(p?.depth_rank ?? "—")}</td><td>${escapeHtml(p?.confidence ?? "—")}</td></tr>`).join("")}</tbody></table>`;
+    }
+
+    // ── run result rendering (YOLO + Depth + InternVL, single run) ────
+
+    function drawResultOverlay() {
+      const img = $("resultImage");
+      const canvas = $("resultCanvas");
+      const wrap = canvas.parentElement;
+      const cw = wrap.clientWidth, ch = wrap.clientHeight;
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, cw, ch);
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      if (!iw || !ih) return;
+      const scale = Math.min(cw / iw, ch / ih);
+      const dw = iw * scale, dh = ih * scale;
+      const ox = (cw - dw) / 2, oy = (ch - dh) / 2;
+
+      ctx.strokeStyle = "rgba(13,148,136,0.35)"; ctx.lineWidth = 1;
+      [20, 40, 60, 80].forEach((pct) => {
+        const x = ox + (pct / 100) * dw;
+        ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + dh); ctx.stroke();
+      });
+
+      const detections = Array.isArray(state.result?.detections) ? state.result.detections : [];
+      ctx.font = "11px Inter, ui-sans-serif, sans-serif";
+      detections.forEach((d) => {
+        const box = d.bbox_pct;
+        if (!Array.isArray(box) || box.length !== 4) return;
+        const x1 = ox + (box[0] / 100) * dw, y1 = oy + (box[1] / 100) * dh;
+        const x2 = ox + (box[2] / 100) * dw, y2 = oy + (box[3] / 100) * dh;
+        ctx.strokeStyle = "#0d9488"; ctx.lineWidth = 2;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        const label = `${d.zone} · d${d.depth_rank}`;
+        const tw = ctx.measureText(label).width + 8;
+        ctx.fillStyle = "rgba(13,148,136,0.9)";
+        ctx.fillRect(x1, Math.max(0, y1 - 16), tw, 16);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(label, x1 + 4, Math.max(11, y1 - 4));
+      });
+    }
+
+    const ZONE_LABELS = { left: "Left", center_left: "Center-Left", center: "Center", center_right: "Center-Right", right: "Right" };
+    const SPACE_KEYS = ["left_space", "center_left_space", "center_space", "center_right_space", "right_space"];
+    const COSTMAP_KEYS = ["left", "center_left", "center", "center_right", "right"];
+
+    function renderSpaceStrip(spaceAnalysis) {
+      const sa = spaceAnalysis || {};
+      $("spaceStrip").innerHTML = SPACE_KEYS.map((key) => {
+        const zoneKey = key.replace("_space", "");
+        const rating = sa[key] || "unknown";
+        const cls = rating === "open" ? "zone-open" : rating === "narrow" ? "zone-narrow" : "zone-blocked";
+        return `<div class="zone-cell ${cls}"><span>${escapeHtml(ZONE_LABELS[zoneKey])}</span><strong>${escapeHtml(rating)}</strong></div>`;
+      }).join("");
+      $("spaceNotes").textContent = sa.space_notes || "";
+    }
+
+    function renderCostmapStrip(costmap) {
+      const cm = costmap || {};
+      $("costmapStrip").innerHTML = COSTMAP_KEYS.map((key) => {
+        const value = Number(cm[key] ?? 0);
+        const hue = Math.round(120 - Math.min(100, Math.max(0, value)) * 1.2);
+        return `<div class="zone-cell" style="background: hsl(${hue}, 70%, 88%); color: hsl(${hue}, 60%, 28%);"><span>${escapeHtml(ZONE_LABELS[key])}</span><strong>${escapeHtml(cm[key] ?? "—")}</strong></div>`;
+      }).join("");
+    }
+
+    function renderAngleGauge(json) {
+      const direction = json?.recommended_direction ?? "—";
+      const angle = Number(json?.recommended_angle ?? 0);
+      const pct = ((Math.max(-90, Math.min(90, angle)) + 90) / 180) * 100;
+      const ticks = [-90, -45, 0, 45, 90].map((t) => `<span class="angle-tick" style="left:${((t + 90) / 180) * 100}%">${t}°</span>`).join("");
+      $("angleGauge").innerHTML = `
+        <div class="angle-track">${ticks}<div class="angle-marker" style="left:${pct}%"></div></div>
+        <div class="angle-caption"><strong>${escapeHtml(direction)}, ${escapeHtml(json?.recommended_angle ?? "—")}°</strong><br><span class="muted">${escapeHtml(json?.reason ?? json?.angle_reason ?? "")}</span></div>`;
+    }
+
+    function renderResult(data) {
+      state.result = data;
+      $("resultPanels").classList.remove("hidden");
+
+      const detections = Array.isArray(data.detections) ? data.detections : [];
+      $("resultDetCount").textContent = `${detections.length} detected · ${data.elapsed_seconds}s · seed ${data.seed}`;
+      const img = $("resultImage");
+      img.onload = drawResultOverlay;
+      img.src = state.imageBase64;
+      if (img.complete) drawResultOverlay();
+      $("depthImage").src = data.depth_heatmap_base64 ? `data:image/png;base64,${data.depth_heatmap_base64}` : "";
+
+      $("peopleTable").innerHTML = peopleHtml(detections);
+
+      const json = data.semantic_json || {};
+      $("trialMeta").textContent = `${data.elapsed_seconds}s · seed ${data.seed}`;
+      $("envSummary").textContent = json.environment_type ?? "";
+      renderSpaceStrip(json.space_analysis);
+      renderCostmapStrip(json.costmap);
+      renderAngleGauge(json);
+    }
+
+    function resetResult() {
+      state.result = null;
+      $("resultPanels").classList.add("hidden");
+    }
+
+    async function runOnce() {
+      if (!state.imageBase64 || state.running) return;
+      state.running = true; $("runOnce").disabled = true;
+      statusText("Running YOLO detection, Depth-Anything, and InternVL...");
+      try {
+        const seed = Math.floor(Math.random() * 2147483646) + 1;
+        const res = await fetch("/api/infer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename: state.filename, image_base64: state.imageBase64, prompt: $("prompt").value, context: {}, temperature: Number($("temperature").value), seed, batch_id: `web-${Date.now()}`, trial_index: 1 }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Inference failed.");
+        renderResult(data);
+        statusText(`Done in ${data.elapsed_seconds}s`);
+      } catch (e) {
+        $("resultPanels").classList.add("hidden");
+        statusText(e.message, true);
+      } finally {
+        state.running = false; $("runOnce").disabled = false;
+      }
+    }
+
+    function setImageReady(filename, dataUrl, metaLabel) {
+      state.filename = filename; state.imageBase64 = dataUrl;
+      $("preview").src = dataUrl; $("preview").style.display = "block";
+      $("dropEmpty").style.display = "none";
+      $("fileMeta").textContent = metaLabel;
+      $("clearImage").disabled = false; $("runOnce").disabled = false;
+      resetResult(); statusText("Image ready.");
+    }
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith("image/")) return statusText("Choose a supported image file.", true);
+      if (file.size > 20 * 1024 * 1024) return statusText("The image must be 20 MB or smaller.", true);
+      const reader = new FileReader();
+      reader.onload = () => setImageReady(file.name, reader.result, `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      reader.readAsDataURL(file);
+    }
+
+    async function loadEvaluationImage(filename) {
+      statusText(`Loading ${filename}...`);
+      const res = await fetch(`/api/evaluation-images/${encodeURIComponent(filename)}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Could not load that evaluation image.");
+      const blob = await res.blob();
+      const reader = new FileReader();
+      const dataUrl = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Could not read the image."));
+        reader.readAsDataURL(blob);
+      });
+      setImageReady(filename, dataUrl, `${filename} · evaluation set`);
+    }
+
+    async function loadEvaluationImageList() {
+      const res = await fetch("/api/evaluation-images", { cache: "no-store" });
+      const data = await res.json();
+      const images = data.images || [];
+      const select = $("imageSource");
+      for (const name of images) {
+        const option = document.createElement("option");
+        option.value = name; option.textContent = name;
+        select.appendChild(option);
+      }
+    }
+
+    function clearImage() {
+      state.filename = null; state.imageBase64 = ""; $("fileInput").value = ""; $("imageSource").value = "";
+      $("preview").removeAttribute("src"); $("preview").style.display = "none";
+      $("dropEmpty").style.display = "block"; $("fileMeta").textContent = "No image selected";
+      $("clearImage").disabled = true; $("runOnce").disabled = true;
+      resetResult(); statusText("Select an image to begin.");
+    }
+
+    function downloadJson(value, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
+      link.download = filename; link.click(); URL.revokeObjectURL(link.href);
+    }
+
+    function formatDate(v) { const d = new Date(v); return Number.isNaN(d.getTime()) ? "Unknown time" : d.toLocaleString(); }
+
+    // ── history helpers ──────────────────────────────────────────────
+
+    async function loadAllHistory(selectNewest = false) {
+      const res = await fetch("/api/history", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not load history.");
+      state.allRuns = data.runs || [];
+      renderHistoryList(selectNewest);
+    }
+
+    function renderHistoryList(selectNewest = false) {
+      const runs = state.allRuns;
+      $("historyCount").textContent = `${runs.length} result${runs.length === 1 ? "" : "s"}`;
+      if (!runs.length) {
+        $("historyList").innerHTML = '<div class="history-placeholder"><div><strong>No saved results</strong><br>Generate results in Review or run evaluate_folder.py.</div></div>';
+        $("historyPlaceholder").classList.remove("hidden"); $("historyContent").classList.add("hidden"); return;
+      }
+      $("historyList").innerHTML = runs.map((r) => `<button class="history-item${r.id === state.activeHistory ? " active" : ""}" data-id="${r.id}"><img class="history-thumb" src="${r.image_url}" alt=""><span><strong>${escapeHtml(r.filename)}</strong><span>${escapeHtml(r.people_count)} people | ${r.schema_valid ? "Schema OK" : `${r.issue_count} issues`}</span><span>${escapeHtml(formatDate(r.created_at))}</span></span></button>`).join("");
+      document.querySelectorAll("#historyList .history-item").forEach((btn) => btn.addEventListener("click", () => loadDetailInto(btn.dataset.id)));
+      if (selectNewest || !state.activeHistory || !runs.find((r) => r.id === state.activeHistory)) loadDetailInto(runs[0].id).catch(() => {});
+    }
+
+    async function loadDetailInto(runId) {
+      const res = await fetch(`/api/history/${runId}`, { cache: "no-store" });
+      const run = await res.json();
+      if (!res.ok) throw new Error(run.error || "Could not load the saved result.");
+      state.activeHistory = runId; state.historyRecord = run;
+      renderHistoryList();
+      $("historyPlaceholder").classList.add("hidden"); $("historyContent").classList.remove("hidden");
+      $("historyTitle").textContent = run.filename;
+      $("historyMeta").textContent = `${run.batch_id} | ${formatDate(run.created_at)} | ${run.elapsed_seconds}s`;
+      $("historyFilename").textContent = run.filename;
+      $("historyImage").src = run.image_url;
+      $("historyJson").value = JSON.stringify(run.semantic_json, null, 2);
+      $("historyMetrics").innerHTML = `<div class="metrics">${metricCellsHtml(run.semantic_json)}</div>`;
+      renderEvaluation("historyValidation", run.evaluation, "historyValidationLabel");
+      $("historyPeople").innerHTML = peopleHtml(run.detections);
+      $("historyPrompt").value = run.effective_prompt || run.prompt || "";
+    }
+
+    async function clearHistory() {
+      if (!confirm("Delete all saved InternVL history records and copied images?")) return;
+      const res = await fetch("/api/history/clear", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not clear history.");
+      state.activeHistory = null; state.historyRecord = null;
+      await loadAllHistory();
+    }
+
+    // ── wire up events ───────────────────────────────────────────────
+    $("reviewNav").addEventListener("click", () => switchView("review"));
+    $("historyNav").addEventListener("click", () => switchView("history"));
+    window.addEventListener("resize", () => { if (state.result) drawResultOverlay(); });
+    $("runOnce").addEventListener("click", runOnce);
+    $("clearImage").addEventListener("click", clearImage);
+    $("dropZone").addEventListener("click", () => $("fileInput").click());
+    $("fileInput").addEventListener("change", (e) => loadFile(e.target.files[0]));
+    $("imageSource").addEventListener("change", (e) => {
+      const value = e.target.value;
+      if (!value) return;
+      loadEvaluationImage(value).catch((err) => statusText(err.message, true));
+    });
+    $("dropZone").addEventListener("dragover", (e) => { e.preventDefault(); $("dropZone").classList.add("dragging"); });
+    $("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("dragging"));
+    $("dropZone").addEventListener("drop", (e) => { e.preventDefault(); $("dropZone").classList.remove("dragging"); loadFile(e.dataTransfer.files[0]); });
+    $("temperature").addEventListener("input", () => $("temperatureValue").textContent = Number($("temperature").value).toFixed(2));
+    $("downloadResult").addEventListener("click", () => state.result && downloadJson(state.result, `run_${state.result.history_id}.json`));
+    $("downloadHistory").addEventListener("click", () => state.historyRecord && downloadJson(state.historyRecord, `internvl_history_${state.historyRecord.id}.json`));
+    $("refreshHistory").addEventListener("click", () => loadAllHistory(true).catch((e) => alert(e.message)));
+    $("clearHistory").addEventListener("click", () => clearHistory().catch((e) => alert(e.message)));
+
+    fetch("/api/config", { cache: "no-store" }).then(async (res) => {
+      const config = await res.json();
+      if (!res.ok) throw new Error(config.error || "Could not load configuration.");
+      $("prompt").value = config.prompt;
+      const rt = config.runtime || {};
+      if (!rt.ready) statusText("InternVL packages are not installed in this Python environment.", true);
+    }).catch((e) => statusText(e.message, true));
+    loadEvaluationImageList().catch(() => {});
+    resetResult();
+  </script>
+</body>
+</html>

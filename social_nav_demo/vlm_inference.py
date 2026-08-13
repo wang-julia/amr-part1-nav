@@ -5,9 +5,9 @@ from typing import Dict, Tuple
 
 
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "vlm_outputs"
-DEFAULT_QWEN_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct"
+DEFAULT_INTERNVL_MODEL = "OpenGVLab/InternVL2_5-4B"
 
-_QWEN_CACHE: Dict[Tuple[str, str, int, int, bool], Tuple[object, object, object]] = {}
+_INTERNVL_CACHE: Dict[Tuple, Tuple] = {}
 
 
 def load_replay_output(
@@ -58,7 +58,7 @@ def _is_right_wall_group_context(context: Dict | None) -> bool:
 
 
 def _cleanup_semantic_json(result: Dict, context: Dict | None) -> Dict:
-    """Keep Qwen output aligned with the demo's local-costmap contract."""
+    """Keep VLM output aligned with the demo's local-costmap contract."""
     cleaned = dict(result)
     position_hint = _context_position_hint(context)
     right_wall_group = _is_right_wall_group_context(context)
@@ -144,113 +144,99 @@ def _cleanup_semantic_json(result: Dict, context: Dict | None) -> Dict:
     return cleaned
 
 
-def _load_qwen_model(
+def _load_internvl_model(
     model_id: str,
-    device_map: str = "auto",
-    min_pixels: int = 128 * 28 * 28,
-    max_pixels: int = 512 * 28 * 28,
     local_files_only: bool = False,
-) -> Tuple[object, object, object]:
-    """Lazy-load Qwen2.5-VL so replay mode stays lightweight."""
-    cache_key = (model_id, device_map, min_pixels, max_pixels, local_files_only)
-    if cache_key in _QWEN_CACHE:
-        return _QWEN_CACHE[cache_key]
+) -> Tuple:
+    """Lazy-load InternVL2.5 so replay mode stays lightweight."""
+    cache_key = (model_id, local_files_only)
+    if cache_key in _INTERNVL_CACHE:
+        return _INTERNVL_CACHE[cache_key]
 
     try:
         import torch
-        from qwen_vl_utils import process_vision_info
-        from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+        from transformers import AutoModel, AutoTokenizer
     except ImportError as exc:
         raise RuntimeError(
-            "Qwen mode requires torch, transformers, accelerate, and qwen-vl-utils "
+            "InternVL mode requires torch, transformers, accelerate, timm, and torchvision "
             "inside the Python environment running generate_demo.py."
         ) from exc
 
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+    if torch.cuda.is_available():
+        device = "cuda"
+        dtype = torch.float16
+    elif torch.backends.mps.is_available():
+        device = "mps"
+        dtype = torch.bfloat16
+    else:
+        device = "cpu"
+        dtype = torch.float32
+
+    model = AutoModel.from_pretrained(
         model_id,
         torch_dtype=dtype,
-        device_map=device_map,
+        trust_remote_code=True,
+        use_flash_attn=False,
         local_files_only=local_files_only,
-    )
-    processor = AutoProcessor.from_pretrained(
+    ).eval()
+    if device != "cuda":
+        model = model.to(device)
+
+    tokenizer = AutoTokenizer.from_pretrained(
         model_id,
-        min_pixels=min_pixels,
-        max_pixels=max_pixels,
+        trust_remote_code=True,
         local_files_only=local_files_only,
     )
-    _QWEN_CACHE[cache_key] = (model, processor, process_vision_info)
-    return _QWEN_CACHE[cache_key]
+    _INTERNVL_CACHE[cache_key] = (model, tokenizer, device, dtype)
+    return _INTERNVL_CACHE[cache_key]
 
 
-def run_qwen_vl_inference(
+def run_internvl_inference(
     image_path: Path,
     prompt: str,
     context: Dict,
-    model_id: str = DEFAULT_QWEN_MODEL,
+    model_id: str = DEFAULT_INTERNVL_MODEL,
     max_new_tokens: int = 700,
-    device_map: str = "auto",
-    min_pixels: int = 128 * 28 * 28,
-    max_pixels: int = 512 * 28 * 28,
     local_files_only: bool = False,
 ) -> Dict:
-    """Run local Qwen2.5-VL and return parsed semantic-costmap JSON."""
+    """Run local InternVL2.5 and return parsed semantic-costmap JSON."""
     if not image_path.exists():
-        raise FileNotFoundError(f"Qwen image not found: {image_path}")
+        raise FileNotFoundError(f"InternVL image not found: {image_path}")
 
-    model, processor, process_vision_info = _load_qwen_model(
-        model_id,
-        device_map,
-        min_pixels,
-        max_pixels,
-        local_files_only,
-    )
-    qwen_prompt = (
+    model, tokenizer, device, dtype = _load_internvl_model(model_id, local_files_only)
+
+    import torch
+    from PIL import Image
+    from torchvision import transforms
+
+    full_prompt = (
         f"{prompt.strip()}\n\n"
         "Mock navigation context:\n"
         f"{json.dumps(context, indent=2)}\n\n"
         "Return only valid JSON for the semantic costmap schema."
     )
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": str(image_path)},
-                {"type": "text", "text": qwen_prompt},
-            ],
-        }
-    ]
+    question = f"<image>\n{full_prompt}"
 
-    text = processor.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
+    img = Image.open(image_path).convert("RGB")
+    transform = transforms.Compose(
+        [
+            transforms.Resize(
+                (448, 448), interpolation=transforms.InterpolationMode.BICUBIC
+            ),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
+        ]
     )
-    image_inputs, video_inputs = process_vision_info(messages)
-    inputs = processor(
-        text=[text],
-        images=image_inputs,
-        videos=video_inputs,
-        padding=True,
-        return_tensors="pt",
-    ).to(model.device)
+    pixel_values = transform(img).unsqueeze(0).to(device, dtype=dtype)
 
-    # Import here so replay mode does not depend on torch being installed.
-    import torch
+    generation_config = dict(max_new_tokens=max_new_tokens, do_sample=False)
 
     with torch.no_grad():
-        generated_ids = model.generate(**inputs, max_new_tokens=max_new_tokens)
+        response = model.chat(tokenizer, pixel_values, question, generation_config)
 
-    generated_ids_trimmed = [
-        output_ids[len(input_ids) :]
-        for input_ids, output_ids in zip(inputs.input_ids, generated_ids)
-    ]
-    output_text = processor.batch_decode(
-        generated_ids_trimmed,
-        skip_special_tokens=True,
-        clean_up_tokenization_spaces=False,
-    )[0]
-    return _extract_json_object(output_text)
+    return _extract_json_object(response)
 
 
 def infer_semantic_json(
@@ -259,37 +245,46 @@ def infer_semantic_json(
     image_path: Path | None = None,
     prompt: str = "",
     context: Dict | None = None,
-    model_id: str = DEFAULT_QWEN_MODEL,
+    model_id: str = DEFAULT_INTERNVL_MODEL,
     fallback_to_replay: bool = True,
     save_output_dir: Path | None = None,
+    internvl_max_new_tokens: int = 700,
+    internvl_local_files_only: bool = False,
+    use_saved_internvl: bool = False,
+    # backwards-compat aliases
     qwen_device_map: str = "auto",
-    qwen_max_new_tokens: int = 700,
-    qwen_min_pixels: int = 128 * 28 * 28,
-    qwen_max_pixels: int = 512 * 28 * 28,
-    qwen_local_files_only: bool = False,
-    use_saved_qwen: bool = False,
+    qwen_max_new_tokens: int | None = None,
+    qwen_min_pixels: int | None = None,
+    qwen_max_pixels: int | None = None,
+    qwen_local_files_only: bool | None = None,
+    use_saved_qwen: bool | None = None,
 ) -> Dict:
+    if qwen_max_new_tokens is not None:
+        internvl_max_new_tokens = qwen_max_new_tokens
+    if qwen_local_files_only is not None:
+        internvl_local_files_only = qwen_local_files_only
+    if use_saved_qwen is not None:
+        use_saved_internvl = use_saved_qwen
+
     if mode == "replay":
         return load_replay_output(frame_id)
-    if mode == "qwen":
-        if use_saved_qwen and save_output_dir is not None:
+
+    if mode in ("internvl", "qwen"):
+        if use_saved_internvl and save_output_dir is not None:
             saved_path = save_output_dir / f"{frame_id}.json"
             if saved_path.exists():
                 result = load_replay_output(frame_id, save_output_dir)
                 return _cleanup_semantic_json(result, context)
         if image_path is None or context is None:
-            raise ValueError("image_path and context are required for qwen mode.")
+            raise ValueError("image_path and context are required for internvl mode.")
         try:
-            result = run_qwen_vl_inference(
+            result = run_internvl_inference(
                 image_path=image_path,
                 prompt=prompt,
                 context=context,
                 model_id=model_id,
-                max_new_tokens=qwen_max_new_tokens,
-                device_map=qwen_device_map,
-                min_pixels=qwen_min_pixels,
-                max_pixels=qwen_max_pixels,
-                local_files_only=qwen_local_files_only,
+                max_new_tokens=internvl_max_new_tokens,
+                local_files_only=internvl_local_files_only,
             )
         except Exception as exc:
             if not fallback_to_replay:
@@ -297,8 +292,8 @@ def infer_semantic_json(
             result = load_replay_output(frame_id)
             result = {
                 **result,
-                "inference_mode": "replay_fallback_after_qwen_error",
-                "qwen_error": str(exc),
+                "inference_mode": "replay_fallback_after_internvl_error",
+                "internvl_error": str(exc),
             }
         result = _cleanup_semantic_json(result, context)
 
@@ -307,4 +302,5 @@ def infer_semantic_json(
             path = save_output_dir / f"{frame_id}.json"
             path.write_text(json.dumps(result, indent=2), encoding="utf-8")
         return result
+
     raise ValueError(f"Unsupported inference mode: {mode}")
