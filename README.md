@@ -80,18 +80,6 @@ python evaluate_folder.py --no-grounding   # A/B: skip sensor injection
 
 ---
 
-## Notable Features
-
-- **Deterministic heading** — zone selection is pure arithmetic; the VLM cannot override it
-- **2D costmap grid** — 5 zones × 5 depth rows (near→far), visualized as a heat table
-- **Hard wall filter** — zones rated "blocked" are excluded from routing regardless of people cost
-- **SegFormer grounding** — pixel-level floor/obstacle percentages shown per zone in the UI and fed to InternVL as calibration context
-- **Zone tint overlay** — semi-transparent green/red tints on the camera canvas reflect SegFormer's floor vs. obstacle readings
-- **Run history** — every inference is saved with full context, costmap, and detections for review
-- **Sign-correct bearings** — left zones always negative degrees, right always positive; slider matches
-
----
-
 ## Demo Cases
 
 ### Case 1 — Outdoor crowd, multiple people at mid/far depth
@@ -139,6 +127,18 @@ One person at depth rank 1 (nearest) blocking the center zone. With only the cen
 A mother kneeling with a child — short stature means YOLO may undercount; SegFormer provides a floor-level cross-check. The corridor walls on both sides are classified as **blocked** by SegFormer (high `w%` wall coverage), which InternVL confirms. All five zones rated blocked; robot steers to center-left (lowest wall cost at 75) and avoids routing through detected walls.
 
 ![Case 5 — SegFormer](readme_images/5_segformer.png)
+
+---
+
+## Notable Features
+
+- **Deterministic heading** — zone selection is pure arithmetic; the VLM cannot override it
+- **2D costmap grid** — 5 zones × 5 depth rows (near→far), visualized as a heat table
+- **Hard wall filter** — zones rated "blocked" are excluded from routing regardless of people cost
+- **SegFormer grounding** — pixel-level floor/obstacle percentages shown per zone in the UI and fed to InternVL as calibration context
+- **Zone tint overlay** — semi-transparent green/red tints on the camera canvas reflect SegFormer's floor vs. obstacle readings
+- **Run history** — every inference is saved with full context, costmap, and detections for review
+- **Sign-correct bearings** — left zones always negative degrees, right always positive; slider matches
 
 ---
 
