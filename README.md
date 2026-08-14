@@ -174,4 +174,4 @@ social_nav_demo/           # Offline demo generator — fuses camera frames into
 
 **VLA CrowdSim** (`vla-crowdsim/`) is a live 2D simulation of the AMR navigating a classroom with 15 pedestrians using the Helbing Social Force Model. The robot's heading controller is driven by the same zone costmap signal produced by this pipeline — colored heatmap shows real-time social cost.
 
-![VLA CrowdSim](readme_images/vlacrowdsim.png)
+<img src="readme_images/vlacrowdsim.png" width="49%"/> <img src="readme_images/vlacrowdsim2.png" width="49%"/>
