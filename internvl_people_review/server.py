@@ -15,7 +15,7 @@ from pathlib import Path
 from threading import Lock, Timer
 from urllib.parse import urlparse
 
-from detection_runtime import analyze_image, build_cost_grid, detect_zone_obstacles, reduce_zone_costs, render_depth_heatmap
+from detection_runtime import analyze_image, build_cost_grid, classify_background_zones, detect_zone_obstacles, reduce_zone_costs, render_depth_heatmap
 from evaluate_folder import SUPPORTED_SUFFIXES
 from history_store import clear_runs, delete_run, get_image, get_run, list_runs, save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
@@ -202,6 +202,7 @@ class ReviewHandler(SimpleHTTPRequestHandler):
             model_id = os.environ.get("INTERNVL_MODEL", DEFAULT_MODEL)
             batch_id = str(request.get("batch_id") or secrets.token_hex(8))
             trial_index = max(1, int(request.get("trial_index", 1)))
+            zone_background = None
             with MODEL_LOCK:
                 detections, depth_map, img_w, img_h = analyze_image(image_path)
                 person_zones = {d["zone"] for d in detections}
@@ -228,6 +229,18 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                             for d in detections
                         ],
                     }
+                try:
+                    zone_background = classify_background_zones(image_path)
+                    context["zone_background"] = {
+                        z: {
+                            "open_pct": v["open_pct"],
+                            "obstacle_pct": v["obstacle_pct"],
+                            "obstacle_labels": v["obstacle_labels"],
+                        }
+                        for z, v in zone_background.items()
+                    }
+                except Exception as _seg_exc:
+                    print(f"[zone-seg] skipped: {_seg_exc}")
                 vlm_json = run_inference(
                     image_path=image_path,
                     base_prompt=prompt,
@@ -274,6 +287,7 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                     "history_id": history_entry["id"],
                     "batch_id": batch_id,
                     "trial_index": trial_index,
+                    "zone_background": zone_background,
                     "runtime": runtime_status(),
                 }
             )

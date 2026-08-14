@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from detection_runtime import analyze_image, build_cost_grid, detect_zone_obstacles, reduce_zone_costs
+from detection_runtime import analyze_image, build_cost_grid, classify_background_zones, detect_zone_obstacles, reduce_zone_costs
 from history_store import save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
 from navigation import build_navigation
@@ -131,6 +131,18 @@ def main() -> None:
                         }
                         for d in detected
                     ]
+                try:
+                    zone_background = classify_background_zones(image_path)
+                    context["zone_background"] = {
+                        z: {
+                            "open_pct": v["open_pct"],
+                            "obstacle_pct": v["obstacle_pct"],
+                            "obstacle_labels": v["obstacle_labels"],
+                        }
+                        for z, v in zone_background.items()
+                    }
+                except Exception as _seg_exc:
+                    print(f"[zone-seg] skipped: {_seg_exc}")
 
             raw_result = run_inference(
                 image_path=image_path,

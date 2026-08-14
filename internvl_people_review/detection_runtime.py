@@ -7,6 +7,7 @@ from typing import Any
 
 DEFAULT_YOLO_MODEL = "yolov8n.pt"
 DEFAULT_DEPTH_MODEL = "depth-anything/Depth-Anything-V2-Small-hf"
+DEFAULT_SEG_MODEL = "nvidia/segformer-b0-finetuned-ade-512-512"
 PERSON_CLASS_ID = 0
 
 ZONES = ("left", "center_left", "center", "center_right", "right")
@@ -46,6 +47,14 @@ OBSTACLE_ZONE_COST = 75
 
 _YOLO_CACHE: dict[tuple, Any] = {}
 _DEPTH_CACHE: dict[tuple, Any] = {}
+_SEG_CACHE: dict[tuple, Any] = {}
+
+# Semantic labels treated as hard obstacles (robot cannot pass through).
+_HARD_OBSTACLE_KEYWORDS = frozenset({"wall", "door", "window", "column", "pillar", "fence", "railing"})
+# Semantic labels treated as navigable floor surface.
+_NAVIGABLE_KEYWORDS = frozenset({"floor", "rug", "flooring"})
+# Analyse the bottom fraction of each zone column to focus on ground-level content.
+_FLOOR_BAND_FRACTION = 0.40
 
 
 def _detect_device() -> tuple[str, "int | str"]:
@@ -395,6 +404,110 @@ def detect_zone_obstacles(
     return obstacles
 
 
+def _label_kind(label: str) -> str:
+    """Return 'obstacle', 'navigable', or '' for an ADE20K label string.
+
+    ADE20K uses compound names like 'floor, flooring' or 'column, pillar',
+    so substring matching is used rather than exact equality.
+    """
+    lower = label.lower()
+    if any(kw in lower for kw in _HARD_OBSTACLE_KEYWORDS):
+        return "obstacle"
+    if any(kw in lower for kw in _NAVIGABLE_KEYWORDS):
+        return "navigable"
+    return ""
+
+
+def load_segmenter(model_id: str = DEFAULT_SEG_MODEL):
+    """Load (and cache) a semantic segmentation pipeline — mirrors load_depth."""
+    try:
+        from transformers import pipeline
+    except ImportError as exc:
+        raise RuntimeError(
+            "Missing segmentation runtime packages. Install transformers in this "
+            "app's Python environment."
+        ) from exc
+
+    _, pipeline_device = _detect_device()
+    key = (model_id, pipeline_device)
+    if key in _SEG_CACHE:
+        return _SEG_CACHE[key]
+
+    seg_pipe = pipeline("image-segmentation", model=model_id, device=pipeline_device)
+    _SEG_CACHE[key] = seg_pipe
+    return seg_pipe
+
+
+def classify_background_zones(
+    image_path: Path,
+    seg_model_id: str = DEFAULT_SEG_MODEL,
+) -> dict[str, dict]:
+    """Segment floor-level hard obstacles and navigable surfaces per zone.
+
+    Runs the segformer on the full image, then for each of the five zone columns
+    examines only the bottom _FLOOR_BAND_FRACTION of rows (ground level), so that
+    distant ceiling or wall texture does not inflate obstacle scores.
+
+    Returns a dict keyed by zone name:
+        open_pct       — fraction of floor-band pixels labeled as navigable surface
+        obstacle_pct   — fraction labeled as a hard obstacle
+        obstacle_labels — sorted list of hard-obstacle label strings detected
+    """
+    import numpy as np
+    from PIL import Image
+
+    seg = load_segmenter(seg_model_id)
+    image = Image.open(image_path).convert("RGB")
+    results = seg(image)
+
+    empty = {"open_pct": 0.0, "obstacle_pct": 0.0, "obstacle_labels": []}
+    if not results:
+        return {z: dict(empty) for z in ZONES}
+
+    # All masks from one pipeline call share the same spatial dimensions.
+    mask0 = results[0]["mask"]
+    mask_arr0 = np.array(mask0)
+    mask_h, mask_w = mask_arr0.shape
+
+    floor_top = int((1.0 - _FLOOR_BAND_FRACTION) * mask_h)
+    band_h = mask_h - floor_top  # height of the floor band in pixels
+
+    col_lo = [0] + [max(1, int(b / 100.0 * mask_w)) for b in ZONE_BOUNDARIES_PCT]
+    col_hi = col_lo[1:] + [mask_w]
+
+    zone_obs_px: dict[str, int] = {z: 0 for z in ZONES}
+    zone_nav_px: dict[str, int] = {z: 0 for z in ZONES}
+    zone_obs_labels: dict[str, set] = {z: set() for z in ZONES}
+
+    for seg_result in results:
+        kind = _label_kind(seg_result["label"])
+        if not kind:
+            continue
+
+        mask_arr = np.array(seg_result["mask"])
+        floor_strip = mask_arr[floor_top:, :]  # crop to floor band
+
+        for zone, x0, x1 in zip(ZONES, col_lo, col_hi):
+            px = int(np.count_nonzero(floor_strip[:, x0:x1]))
+            if px == 0:
+                continue
+            if kind == "obstacle":
+                zone_obs_px[zone] += px
+                zone_obs_labels[zone].add(seg_result["label"].lower())
+            else:
+                zone_nav_px[zone] += px
+
+    output: dict[str, dict] = {}
+    for zone, x0, x1 in zip(ZONES, col_lo, col_hi):
+        total = band_h * (x1 - x0)
+        output[zone] = {
+            "open_pct": round(zone_nav_px[zone] / total, 3) if total > 0 else 0.0,
+            "obstacle_pct": round(zone_obs_px[zone] / total, 3) if total > 0 else 0.0,
+            "obstacle_labels": sorted(zone_obs_labels[zone]),
+        }
+    return output
+
+
 if __name__ == "__main__":
     import json
     import sys
@@ -414,3 +527,39 @@ if __name__ == "__main__":
     grid = build_cost_grid(people)
     costs = reduce_zone_costs(grid)
     print("Zone costs:", {k: round(v, 1) if isinstance(v, float) else v for k, v in costs.items()})
+
+    # ── background zone segmentation sanity-check ─────────────────────────────
+    print("\n── classify_background_zones ──────────────────────────────────────────")
+    all_imgs = sorted(
+        p for p in images_dir.iterdir()
+        if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+    ) if images_dir.is_dir() else []
+
+    def _pick(keywords: list[str]) -> "Path | None":
+        for kw in keywords:
+            match = next((p for p in all_imgs if kw in p.name.lower()), None)
+            if match:
+                return match
+        return all_imgs[0] if all_imgs else None
+
+    seg_targets = [
+        (_pick(["hall", "corridor"]), "hallway"),
+        (_pick(["room", "open", "lobby", "outdoor", "crowd"]), "open-room"),
+    ]
+    # Avoid running the same image twice
+    seen: set = set()
+    for img_path, scene_label in seg_targets:
+        if img_path is None or img_path in seen:
+            continue
+        seen.add(img_path)
+        print(f"\n  {scene_label}: {img_path.name}")
+        try:
+            bg = classify_background_zones(img_path)
+            for zone, d in bg.items():
+                labels = ", ".join(d["obstacle_labels"]) if d["obstacle_labels"] else "none"
+                print(
+                    f"    {zone:15s}  floor={d['open_pct']:.1%}  "
+                    f"obstacle={d['obstacle_pct']:.1%}  [{labels}]"
+                )
+        except Exception as exc:
+            print(f"    failed: {exc}")

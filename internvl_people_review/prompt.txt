@@ -19,6 +19,22 @@ For each zone, could the robot drive forward 2-3m if no people were present?
 Do not blocked-rate a zone for: a person standing there, an image-edge
 crop, or a wall/doorway far in the background with open floor before it.
 
+SENSOR DATA (provided in scene context as zone_background):
+Semantic segmentation of the bottom 40% of each zone column — ground level only.
+Per zone:
+  open_pct       — fraction of floor-band pixels identified as navigable surface
+                   (floor, rug).  Higher = more clear floor detected.
+  obstacle_pct   — fraction identified as a hard obstacle (wall, door, column,
+                   fence, railing).  Higher = more wall/obstacle detected.
+  obstacle_labels — which hard-obstacle types were found.
+
+Use zone_background as a strong calibration signal for space_analysis:
+  obstacle_labels contains "wall" and obstacle_pct > 0.1  →  rate "blocked"
+  open_pct > 0.25 and obstacle_labels empty               →  lean toward "open"
+  Intermediate cases: weigh both the data and what you can see visually.
+  Your visual reading of the image is the final authority — the sensor data
+  is a hint, not an override.
+
 environment_type: hallway | open_room | lobby | outdoor | doorway | other.
 
 Return ONLY this JSON, no markdown, no prose. Fill zone_scan first —
