@@ -12,6 +12,30 @@ PERSON_CLASS_ID = 0
 ZONES = ("left", "center_left", "center", "center_right", "right")
 ZONE_BOUNDARIES_PCT = (20.0, 40.0, 60.0, 80.0)
 
+# Representative bearing (degrees) at each zone's midpoint across the robot's
+# -90..90 forward arc.  Negative = left of forward, 0 = straight, positive = right.
+ZONE_DEGREES: dict[str, int] = {
+    "left": -72,
+    "center_left": -36,
+    "center": 0,
+    "center_right": 36,
+    "right": 72,
+}
+
+
+def zone_to_angle(zone_name: str) -> int:
+    """Return the canonical bearing (degrees) for a named zone.
+
+    Negative = left, 0 = straight ahead, positive = right.
+    Unknown zone names return 0.
+    """
+    return ZONE_DEGREES.get(zone_name, 0)
+
+# 2-D people cost grid.
+GRID_ROWS = 5       # depth bins: row 0 = nearest, row GRID_ROWS-1 = farthest
+BASE_WEIGHT = 100.0 # cost contributed by the nearest possible detection
+DECAY_RATE = 0.5    # exponential decay per row; cost = BASE_WEIGHT * exp(-DECAY_RATE * row)
+
 # Obstacle (wall/door) detection from the depth map.
 # Sample rows 15%–60% of the image: above floor, below ceiling.
 OBSTACLE_ROW_BAND = (0.15, 0.60)
@@ -109,15 +133,17 @@ def _assign_depth_ranks(detections: list[dict[str, Any]]) -> None:
 def _assign_depth_buckets(
     detections: list[dict[str, Any]], depth_low: float, depth_high: float
 ) -> None:
-    """Label each person near/mid/far from its depth_value, normalized against the
-    FULL depth map's range (depth_low..depth_high) — the same range the depth
-    heatmap is colorized with, so a person's label matches where they sit in the
-    heatmap. Normalizing against only the detected people (the old behavior) made a
-    lone person always "near" and the nearest of any group always "near" regardless
-    of true distance. This keeps the near/mid/far judgment out of the VLM."""
+    """Label each person near/mid/far and store depth_normalized (0=far, 1=near).
+
+    Normalizes against the FULL depth map range so labels match the heatmap and
+    are absolute (a lone far person stays "far", not "near"). depth_normalized is
+    stored so build_cost_grid can place detections in the correct grid row without
+    relying on the relative depth_rank.
+    """
     span = depth_high - depth_low
     for d in detections:
         normalized = (d["depth_value"] - depth_low) / span if span > 0 else 0.5
+        d["depth_normalized"] = round(float(normalized), 4)
         d["depth"] = "near" if normalized >= 0.66 else "mid" if normalized >= 0.33 else "far"
 
 
@@ -229,6 +255,103 @@ def render_depth_heatmap(depth_map, colormap: str = "inferno") -> bytes:
     return buffer.getvalue()
 
 
+# Fallback row for each depth label when depth_normalized is not present.
+_DEPTH_LABEL_ROW = {"near": 0, "mid": 2, "far": GRID_ROWS - 1}
+
+
+def build_cost_grid(detected: list[dict]) -> list[list[float]]:
+    """Build a GRID_ROWS × 5 cost grid from YOLO+depth detections.
+
+    Row 0 = nearest, row GRID_ROWS-1 = farthest. Each detection is placed using
+    depth_normalized (0=far, 1=near) so that the row reflects absolute scene
+    distance rather than rank among detected people. This means a crowd of people
+    all labeled "far" correctly cluster in the far rows instead of being spread
+    across near rows by their relative rank.
+
+    Falls back to the coarse depth label ("near"/"mid"/"far") for detections that
+    pre-date the depth_normalized field.
+    """
+    import math
+
+    zone_col = {zone: i for i, zone in enumerate(ZONES)}
+    grid = [[0.0] * len(ZONES) for _ in range(GRID_ROWS)]
+    for d in detected or []:
+        zone = d.get("zone")
+        if zone not in zone_col:
+            continue
+        col = zone_col[zone]
+
+        depth_norm = d.get("depth_normalized")
+        if depth_norm is not None:
+            # depth_normalized: 1=nearest, 0=farthest → row 0=nearest, GRID_ROWS-1=farthest
+            row = int((1.0 - float(depth_norm)) * GRID_ROWS)
+        else:
+            row = _DEPTH_LABEL_ROW.get(d.get("depth", "far"), GRID_ROWS - 1)
+        row = max(0, min(row, GRID_ROWS - 1))
+
+        grid[row][col] += BASE_WEIGHT * math.exp(-DECAY_RATE * row)
+    return grid
+
+
+def reduce_zone_costs(grid: list[list[float]]) -> dict:
+    """Sum each zone column across all depth rows.
+
+    Returns {"left": float, ..., "right": float, "lowest_cost_zone": str}.
+    Ties break toward center (smallest column distance from center index 2).
+    """
+    totals = {zone: 0.0 for zone in ZONES}
+    for row in grid:
+        for col, zone in enumerate(ZONES):
+            if col < len(row):
+                totals[zone] += row[col]
+    lowest = min(ZONES, key=lambda z: (totals[z], abs(ZONES.index(z) - 2)))
+    return {**totals, "lowest_cost_zone": lowest}
+
+
+def _smoke_test_cost_grid() -> None:
+    """Verify build_cost_grid + reduce_zone_costs with synthetic detections."""
+    import math
+
+    # Case 1: far-center person (depth_normalized=0.10 → row 4, the far row)
+    far_center = [{"zone": "center", "depth_normalized": 0.10, "depth": "far"}]
+    grid1 = build_cost_grid(far_center)
+    costs1 = reduce_zone_costs(grid1)
+    far_row = min(int((1.0 - 0.10) * GRID_ROWS), GRID_ROWS - 1)  # = 4
+    expected_center = BASE_WEIGHT * math.exp(-DECAY_RATE * far_row)
+    assert abs(costs1["center"] - expected_center) < 1e-6, f"Case 1 center cost wrong: {costs1}"
+    assert all(costs1[z] == 0.0 for z in ZONES if z != "center"), f"Case 1 non-center nonzero: {costs1}"
+
+    # Case 2: near-right person (depth_normalized=0.90 → row 0, the near row)
+    near_right = [{"zone": "right", "depth_normalized": 0.90, "depth": "near"}]
+    grid2 = build_cost_grid(near_right)
+    costs2 = reduce_zone_costs(grid2)
+    assert costs2["right"] == BASE_WEIGHT, f"Case 2 right cost wrong: {costs2}"
+
+    # Case 3: far-center vs near-right — far person must be cheaper than near person
+    both = far_center + near_right
+    grid3 = build_cost_grid(both)
+    costs3 = reduce_zone_costs(grid3)
+    assert costs3["center"] < costs3["right"], (
+        f"Case 3: center ({costs3['center']:.2f}) should be cheaper than right ({costs3['right']:.2f})"
+    )
+    assert costs3["lowest_cost_zone"] != "right", f"Case 3 lowest_cost_zone is 'right', expected center-ish"
+
+    # Case 4: crowd all labeled "far" — they must all land in far rows, not near rows
+    crowd_far = [
+        {"zone": "left",   "depth_normalized": 0.12, "depth": "far", "depth_rank": 1},
+        {"zone": "center", "depth_normalized": 0.08, "depth": "far", "depth_rank": 2},
+        {"zone": "right",  "depth_normalized": 0.15, "depth": "far", "depth_rank": 3},
+    ]
+    grid4 = build_cost_grid(crowd_far)
+    near_rows_sum = sum(grid4[r][c] for r in range(2) for c in range(5))
+    assert near_rows_sum == 0.0, f"Case 4: far crowd should not appear in near rows, got {grid4}"
+
+    print("Smoke test passed.")
+    print(f"  far-center cost: {costs3['center']:.2f}")
+    print(f"  near-right cost: {costs3['right']:.2f}")
+    print(f"  lowest_cost_zone: {costs3['lowest_cost_zone']}")
+
+
 def detect_zone_obstacles(
     depth_map,
     image_width: int,
@@ -282,7 +405,12 @@ if __name__ == "__main__":
     else:
         target = next(images_dir.glob("21_crowd*"), next(images_dir.iterdir()))
 
+    _smoke_test_cost_grid()
+
     print(f"Running analyze_image on {target}")
     people, depth_map, width, height = analyze_image(target)
     print(f"image size: {width}x{height}, depth map shape: {tuple(depth_map.shape)}")
     print(json.dumps(people, indent=2))
+    grid = build_cost_grid(people)
+    costs = reduce_zone_costs(grid)
+    print("Zone costs:", {k: round(v, 1) if isinstance(v, float) else v for k, v in costs.items()})

@@ -94,7 +94,7 @@
     .drop-empty svg { width: 30px; height: 30px; stroke: var(--faint); margin-bottom: 10px; }
     .drop-empty strong { display: block; font-family: var(--font-display); font-weight: 600; color: var(--text); font-size: 15px; margin-bottom: 4px; }
     .drop-empty span { font-family: var(--font-mono); font-size: 11px; }
-    #preview { display: none; width: 100%; height: 100%; object-fit: contain; }
+    #preview { display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; }
     .file-meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted); min-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .run-row { display: flex; gap: 9px; align-items: center; }
@@ -173,12 +173,51 @@
     .z-blocked .zv { color: var(--bad); }
     .notes { padding: 0 14px 14px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); line-height: 1.55; }
 
-    /* costmap */
-    .cm { border-radius: var(--radius); padding: 10px 6px 9px; text-align: center; border: 1px solid var(--line); background: var(--panel-2); }
-    .cm .zl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .08em; color: var(--faint); }
-    .cm .num { display: block; margin: 4px 0 7px; font-family: var(--font-display); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .cm .bar { height: 3px; border-radius: 0; background: var(--line); overflow: hidden; }
-    .cm .bar > i { display: block; height: 100%; }
+    /* 2-D costmap grid */
+    .cm-grid-wrap { padding: 10px 14px 14px; }
+    .cm-grid-table {
+      display: grid;
+      grid-template-columns: 28px repeat(5, 1fr);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .cmg-hd {
+      padding: 6px 2px; text-align: center;
+      font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+      color: var(--accent); background: var(--panel-2);
+      border-bottom: 2px solid var(--line-2); border-right: 2px solid var(--line-2);
+    }
+    .cmg-hd:first-child { color: var(--faint); font-size: 7.5px; font-weight: 400; letter-spacing: 0; }
+    .cmg-hd:last-child { border-right: 0; }
+    .cmg-rl {
+      height: 22px; padding: 0 5px;
+      font-family: var(--font-mono); font-size: 8px; color: var(--faint);
+      text-align: right; background: var(--panel-2);
+      border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: flex-end;
+    }
+    .cmg-cell {
+      height: 22px;
+      border-right: 2px solid var(--line-2); border-bottom: 1px solid var(--line);
+    }
+    .cmg-cell:last-child { border-right: 0; }
+    .cmg-fl {
+      height: 28px; padding: 0 5px;
+      font-family: var(--font-mono); font-size: 8px; color: var(--faint);
+      text-align: right; background: var(--panel-2);
+      border-right: 1px solid var(--line-2); border-top: 2px solid var(--line-2);
+      display: flex; align-items: center; justify-content: flex-end;
+    }
+    .cmg-fv {
+      height: 28px;
+      border-right: 2px solid var(--line-2); border-top: 2px solid var(--line-2);
+      background: var(--panel-2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 13px; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .cmg-fv:last-child { border-right: 0; }
 
     /* people */
     .people-body { padding: 6px 14px 12px; max-height: 240px; overflow-y: auto; }
@@ -195,7 +234,7 @@
 
     /* ── history ───────────────────────────────────────── */
     .history { display: grid; grid-template-columns: 320px minmax(0, 1fr); height: 100%; }
-    .hist-side { border-right: 1px solid var(--line); display: flex; flex-direction: column; background: var(--bg); }
+    .hist-side { border-right: 1px solid var(--line); display: flex; flex-direction: column; background: var(--bg); height: 100%; overflow: hidden; }
     .hist-side-head { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--line); }
     .hist-list { flex: 1; overflow-y: auto; }
     .hist-item { width: 100%; display: grid; grid-template-columns: 48px 1fr; gap: 11px; padding: 11px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; color: inherit; transition: background .12s; }
@@ -309,19 +348,19 @@
                   <div class="heading-body" id="angleGauge"></div>
                 </div>
                 <div class="card">
-                  <div class="card-head"><h2>Costmap</h2><span class="meta">0 clear · 100 blocked</span></div>
-                  <div class="zones" id="costmapStrip"></div>
-                </div>
-                <div class="card">
-                  <div class="card-head"><h2><span class="tag">InternVL</span> Background Space</h2><span class="meta" id="envSummary"></span></div>
-                  <div class="zones" id="spaceStrip"></div>
-                  <div class="notes" id="spaceNotes"></div>
+                  <div class="card-head"><h2>Costmap</h2><span class="meta">near → far · 0 clear · 100 blocked</span></div>
+                  <div class="cm-grid-wrap" id="costmapGrid"></div>
                 </div>
               </div>
               <div class="col">
                 <div class="card">
                   <div class="card-head"><h2><span class="tag">YOLO+Depth</span> People</h2></div>
                   <div class="people-body" id="peopleTable"></div>
+                </div>
+                <div class="card">
+                  <div class="card-head"><h2><span class="tag">InternVL</span> Background Space</h2><span class="meta" id="envSummary"></span></div>
+                  <div class="zones" id="spaceStrip"></div>
+                  <div class="notes" id="spaceNotes"></div>
                 </div>
               </div>
             </div>
@@ -339,7 +378,7 @@
             <button class="btn ghost" id="refreshHistory" style="height:34px;padding:0 12px">Refresh</button>
           </div>
           <div class="hist-list" id="historyList"></div>
-          <div style="padding:12px;border-top:1px solid var(--line)"><button class="btn ghost" id="clearHistory" style="width:100%;color:var(--bad)">Clear all history</button></div>
+          <div style="padding:12px;border-top:1px solid var(--line)"><button class="btn ghost" id="clearHistory" style="width:100%;color:var(--bad);border-color:rgba(196,85,61,.4)">Clear ALL runs</button></div>
         </aside>
         <div class="hist-detail">
           <div class="hist-placeholder" id="historyPlaceholder"><div><strong>Select a saved run</strong><br><span class="muted">Its frame, detections, and InternVL read appear here.</span></div></div>
@@ -406,11 +445,12 @@
       const scale = Math.min(cw / iw, ch / ih);
       const dw = iw * scale, dh = ih * scale, ox = (cw - dw) / 2, oy = (ch - dh) / 2;
 
-      ctx.strokeStyle = "rgba(230,169,75,0.2)"; ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(230,169,75,0.55)"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
       [20, 40, 60, 80].forEach((pct) => {
         const x = ox + (pct / 100) * dw;
         ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + dh); ctx.stroke();
       });
+      ctx.setLineDash([]);
 
       const detections = Array.isArray(state.result?.detections) ? state.result.detections : [];
       ctx.font = "600 11px Inter, ui-sans-serif, system-ui, sans-serif";
@@ -441,15 +481,49 @@
       $("spaceNotes").textContent = sa.space_notes || "";
     }
 
-    function renderCostmapStrip(cm) {
-      cm = cm || {};
-      $("costmapStrip").innerHTML = COSTMAP_KEYS.map((key) => {
-        const value = Math.max(0, Math.min(100, Number(cm[key] ?? 0)));
-        const hue = 42 - (value / 100) * 30;   // warm gold → red heat
-        const sat = 22 + (value / 100) * 52;    // muted at low cost, hot at high
-        const color = `hsl(${hue}, ${sat}%, 58%)`;
-        return `<div class="cm"><div class="zl">${ZONE_LABELS[key]}</div><span class="num" style="color:${color}">${escapeHtml(cm[key] ?? "—")}</span><div class="bar"><i style="width:${value}%;background:${color}"></i></div></div>`;
-      }).join("");
+    function cellHeat(value) {
+      const t = Math.min(1, Math.max(0, value / 100));
+      if (t < 0.02) return "transparent";
+      const h = Math.round(35 - t * 16);   // amber (35°) → orange-red (19°)
+      const s = Math.round(50 + t * 30);
+      const l = Math.round(20 + t * 16);
+      return `hsl(${h},${s}%,${l}%)`;
+    }
+
+    function aggregateColor(v) {
+      return v > 66 ? "var(--bad)" : v > 33 ? "var(--accent)" : "var(--muted)";
+    }
+
+    function renderCostmapGrid(costGrid, costmap) {
+      const GRID_ROWS = 5;
+      const cm = costmap || {};
+      const grid = Array.isArray(costGrid) ? costGrid : [];
+      const depthLabels = ["near", "", "", "", "far"]; // index 0=near(bottom), 4=far(top)
+      let html = '<div class="cm-grid-table">';
+
+      // Header
+      html += '<div class="cmg-hd">far↑near</div>';
+      ["L","CL","C","CR","R"].forEach((l) => { html += `<div class="cmg-hd">${l}</div>`; });
+
+      // Data rows: far at top, near at bottom
+      for (let r = GRID_ROWS - 1; r >= 0; r--) {
+        html += `<div class="cmg-rl">${depthLabels[r]}</div>`;
+        const row = grid[r] || [];
+        for (let c = 0; c < 5; c++) {
+          const val = row[c] || 0;
+          html += `<div class="cmg-cell" style="background:${cellHeat(val)}" title="${["L","CL","C","CR","R"][c]} · ${depthLabels[r] || "row"+(r+1)}: ${val.toFixed(1)}"></div>`;
+        }
+      }
+
+      // Footer: final fused zone costs (people + background + walls)
+      html += '<div class="cmg-fl">Σ</div>';
+      COSTMAP_KEYS.forEach((z) => {
+        const v = Math.round(Number(cm[z] ?? 0));
+        html += `<div class="cmg-fv" style="color:${aggregateColor(v)}">${v}</div>`;
+      });
+
+      html += "</div>";
+      $("costmapGrid").innerHTML = html;
     }
 
     function renderAngleGauge(json) {
@@ -507,7 +581,7 @@
       $("trialMeta").textContent = `${data.elapsed_seconds}s`;
       $("envSummary").textContent = json.environment_type ?? "";
       renderSpaceStrip(json.space_analysis);
-      renderCostmapStrip(json.costmap);
+      renderCostmapGrid(data.cost_grid, json.costmap);
       renderAngleGauge(json);
     }
 

@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from detection_runtime import analyze_image, detect_zone_obstacles
+from detection_runtime import analyze_image, build_cost_grid, detect_zone_obstacles, reduce_zone_costs
 from history_store import save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
 from navigation import build_navigation
@@ -107,24 +107,30 @@ def main() -> None:
         started = time.perf_counter()
         print(f"[{index}/{len(images)}] {image_path.name}", flush=True)
         try:
-            # YOLO + Depth are authoritative for people/position/depth and feed the
-            # VLM as detected_people; the VLM only reads background + builds the
-            # costmap + picks a heading (see prompt.txt). --no-grounding skips the
-            # injection (the VLM gets no sensor help) for comparison.
+            # YOLO + Depth detect people and walls; the VLM only classifies
+            # background space (open/narrow/blocked). The deterministic code in
+            # navigation.py builds the costmap and picks the heading.
+            # --no-grounding skips the detected_people injection for comparison.
             detected, depth_map, img_w, img_h = analyze_image(image_path)
             person_zones = {d["zone"] for d in detected}
             zone_obstacles = detect_zone_obstacles(depth_map, img_w, img_h, person_zones)
+            cost_grid = build_cost_grid(detected)
+            zone_costs = reduce_zone_costs(cost_grid)
             context: dict = {}
-            if detected and not args.no_grounding:
-                context["detected_people"] = [
-                    {
-                        "id": d["id"],
-                        "zone": d["zone"],
-                        "depth": d["depth"],
-                        "depth_rank": d["depth_rank"],
-                    }
-                    for d in detected
-                ]
+            if not args.no_grounding:
+                people_cost = {z: round(zone_costs[z], 2) for z in ("left", "center_left", "center", "center_right", "right")}
+                context["people_cost_by_zone"] = people_cost
+                context["lowest_cost_zone"] = zone_costs["lowest_cost_zone"]
+                if detected:
+                    context["detected_people"] = [
+                        {
+                            "id": d["id"],
+                            "zone": d["zone"],
+                            "depth": d["depth"],
+                            "depth_rank": d["depth_rank"],
+                        }
+                        for d in detected
+                    ]
 
             raw_result = run_inference(
                 image_path=image_path,
@@ -156,6 +162,7 @@ def main() -> None:
                 temperature=args.temperature,
                 elapsed_seconds=elapsed,
                 detections=detected,
+                cost_grid=cost_grid,
             )
             completed.append(
                 {

@@ -59,6 +59,7 @@ def save_run(
     elapsed_seconds: float,
     detections: list | None = None,
     detection_comparison: dict | None = None,
+    cost_grid: list | None = None,
 ) -> dict[str, Any]:
     """Persist one independent model result and its source image."""
     run_id = uuid4().hex
@@ -86,6 +87,7 @@ def save_run(
         "evaluation": evaluation,
         "detections": detections,
         "detection_comparison": detection_comparison,
+        "cost_grid": cost_grid,
     }
     with HISTORY_LOCK:
         _ensure_directories()

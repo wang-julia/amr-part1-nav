@@ -16,9 +16,9 @@ ZONES = ("left", "center_left", "center", "center_right", "right")
 ZONE_ANGLE = {"left": -72, "center_left": -36, "center": 0, "center_right": 36, "right": 72}
 # Cost a detected person adds to their zone, by depth bucket.
 DEPTH_COST = {"near": 60, "mid": 35, "far": 15}
-# Cost the background rating adds to a zone.
-SPACE_COST = {"open": 0, "narrow": 20, "blocked": 45}
-HOLD_THRESHOLD = 100  # if even the best zone is this costly, hold instead of moving
+# Cost the background rating adds to a zone.  blocked matches OBSTACLE_ZONE_COST so
+# depth-map walls and VLM-rated walls reinforce each other toward the 100 cap.
+SPACE_COST = {"open": 0, "narrow": 20, "blocked": 75}
 
 
 def build_costmap(
@@ -49,13 +49,6 @@ def recommend_heading(cost: dict[str, int], detections: list[dict]) -> dict[str,
         else "no people detected"
     )
 
-    if cost[best] >= HOLD_THRESHOLD:
-        return {
-            "recommended_direction": "hold",
-            "recommended_angle": 0,
-            "reason": f"Every zone is blocked or occupied ({occupied_note}); holding position.",
-        }
-
     angle = ZONE_ANGLE[best]
     direction = "forward" if best == "center" else ("left" if angle < 0 else "right")
     return {
@@ -73,8 +66,12 @@ def build_navigation(
     detections: list[dict],
     zone_obstacles: "dict[str, int] | None" = None,
 ) -> dict[str, Any]:
-    """Merge the VLM's background reading with a code-computed costmap + heading
-    into the full navigation JSON the rest of the app expects."""
+    """Merge InternVL's background space ratings with the deterministic costmap.
+
+    InternVL's only input to the heading is space_analysis (open/narrow/blocked per
+    zone), which feeds into build_costmap via SPACE_COST. Zone selection and angle
+    are always computed from the combined cost — InternVL never overrides the pick.
+    """
     vlm = vlm_json if isinstance(vlm_json, dict) else {}
     space_analysis = vlm.get("space_analysis")
     space_analysis = space_analysis if isinstance(space_analysis, dict) else {}

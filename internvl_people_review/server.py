@@ -15,7 +15,7 @@ from pathlib import Path
 from threading import Lock, Timer
 from urllib.parse import urlparse
 
-from detection_runtime import analyze_image, detect_zone_obstacles, render_depth_heatmap
+from detection_runtime import analyze_image, build_cost_grid, detect_zone_obstacles, reduce_zone_costs, render_depth_heatmap
 from evaluate_folder import SUPPORTED_SUFFIXES
 from history_store import clear_runs, delete_run, get_image, get_run, list_runs, save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
@@ -206,7 +206,15 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                 detections, depth_map, img_w, img_h = analyze_image(image_path)
                 person_zones = {d["zone"] for d in detections}
                 zone_obstacles = detect_zone_obstacles(depth_map, img_w, img_h, person_zones)
+                cost_grid = build_cost_grid(detections)
+                zone_costs = reduce_zone_costs(cost_grid)
                 depth_heatmap_png = render_depth_heatmap(depth_map)
+                people_cost = {z: round(zone_costs[z], 2) for z in ("left", "center_left", "center", "center_right", "right")}
+                context = {
+                    **context,
+                    "people_cost_by_zone": people_cost,
+                    "lowest_cost_zone": zone_costs["lowest_cost_zone"],
+                }
                 if detections:
                     context = {
                         **context,
@@ -251,12 +259,14 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                 temperature=max(0.0, min(temperature, 1.5)),
                 elapsed_seconds=elapsed_seconds,
                 detections=detections,
+                cost_grid=cost_grid,
             )
             self.send_json(
                 {
                     "semantic_json": semantic_json,
                     "evaluation": evaluation,
                     "detections": detections,
+                    "cost_grid": cost_grid,
                     "depth_heatmap_base64": base64.b64encode(depth_heatmap_png).decode("ascii"),
                     "effective_prompt": effective_prompt,
                     "seed": seed,

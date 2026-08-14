@@ -19,6 +19,28 @@ def compose_prompt(base_prompt: str, context: dict) -> str:
     return "\n\n".join(parts)
 
 
+_ZONE_PAT = r"(?:left|center_left|center|center_right|right)"
+
+
+def _repair_json(text: str) -> str:
+    """Fix common InternVL JSON generation mistakes before parsing.
+
+    zone_scan malformation: model writes "zone_scan": "left": open, ...
+    The zone name is quoted, which terminates the JSON string early and puts
+    a bare colon outside the string, causing a parse error.
+    Fix: remove the spurious closing quote from the first zone name so the
+    entire description becomes a valid string value.
+      Before: "zone_scan": "left": open, center_left: open, right: open",
+      After:  "zone_scan": "left: open, center_left: open, right: open",
+    """
+    text = re.sub(
+        r'("zone_scan"\s*:\s*"' + _ZONE_PAT + r')"(\s*:)',
+        r'\1\2',
+        text,
+    )
+    return text
+
+
 def extract_json(text: str) -> dict:
     cleaned = text.strip()
     fenced = re.search(r"```(?:json)?\s*(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
@@ -26,12 +48,14 @@ def extract_json(text: str) -> dict:
         cleaned = fenced.group(1).strip()
     known_keys = (
         "environment_type|space_analysis|left_space|center_left_space|center_space|"
-        "center_right_space|right_space|space_notes|people|people_count|crowd_density|"
-        "person_id|is_cluster|approximate_count|motion|depth|depth_rank|torso_direction|zone|"
-        "predicted_zone|prediction_reason|costmap|left|center_left|center|center_right|"
-        "right|recommended_direction|recommended_angle|angle_reason|reason"
+        "center_right_space|right_space|space_notes|zone_scan|recommended_zone|zone_reason|"
+        "people|people_count|crowd_density|person_id|is_cluster|approximate_count|motion|"
+        "depth|depth_rank|torso_direction|zone|predicted_zone|prediction_reason|costmap|"
+        "left|center_left|center|center_right|right|recommended_direction|recommended_angle|"
+        "angle_reason|reason"
     )
     cleaned = re.sub(rf'"({known_keys})\s*:', r'"\1":', cleaned)
+    cleaned = _repair_json(cleaned)
     try:
         value = json.loads(cleaned)
     except json.JSONDecodeError:
