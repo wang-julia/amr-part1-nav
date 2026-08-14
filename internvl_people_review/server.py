@@ -15,9 +15,9 @@ from pathlib import Path
 from threading import Lock, Timer
 from urllib.parse import urlparse
 
-from detection_runtime import analyze_image, render_depth_heatmap
+from detection_runtime import analyze_image, detect_zone_obstacles, render_depth_heatmap
 from evaluate_folder import SUPPORTED_SUFFIXES
-from history_store import clear_runs, get_image, get_run, list_runs, save_run
+from history_store import clear_runs, delete_run, get_image, get_run, list_runs, save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
 from navigation import build_navigation
 from observations import evaluate_observation
@@ -159,6 +159,13 @@ class ReviewHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/history/clear":
             self.send_json({"deleted": clear_runs()})
             return
+        if self.path.startswith("/api/history/") and self.path.endswith("/delete"):
+            run_id = self.path.removeprefix("/api/history/").removesuffix("/delete").strip("/")
+            if delete_run(run_id):
+                self.send_json({"deleted": run_id})
+            else:
+                self.send_json({"error": "History result not found."}, HTTPStatus.NOT_FOUND)
+            return
         self.send_error(HTTPStatus.NOT_FOUND)
 
     def handle_infer(self) -> None:
@@ -196,7 +203,9 @@ class ReviewHandler(SimpleHTTPRequestHandler):
             batch_id = str(request.get("batch_id") or secrets.token_hex(8))
             trial_index = max(1, int(request.get("trial_index", 1)))
             with MODEL_LOCK:
-                detections, depth_map, _, _ = analyze_image(image_path)
+                detections, depth_map, img_w, img_h = analyze_image(image_path)
+                person_zones = {d["zone"] for d in detections}
+                zone_obstacles = detect_zone_obstacles(depth_map, img_w, img_h, person_zones)
                 depth_heatmap_png = render_depth_heatmap(depth_map)
                 if detections:
                     context = {
@@ -222,7 +231,7 @@ class ReviewHandler(SimpleHTTPRequestHandler):
                     max_new_tokens=int(os.environ.get("INTERNVL_MAX_NEW_TOKENS", "640")),
                     local_files_only=os.environ.get("INTERNVL_LOCAL_FILES_ONLY", "0") == "1",
                 )
-            semantic_json = build_navigation(vlm_json, detections)
+            semantic_json = build_navigation(vlm_json, detections, zone_obstacles)
             evaluation = evaluate_observation(semantic_json)
             elapsed_seconds = round(time.perf_counter() - started, 2)
             effective_prompt = compose_prompt(prompt, context)

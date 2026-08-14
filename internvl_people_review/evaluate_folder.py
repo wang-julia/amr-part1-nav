@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from detection_runtime import detect_people
+from detection_runtime import analyze_image, detect_zone_obstacles
 from history_store import save_run
 from internvl_runtime import DEFAULT_MODEL, compose_prompt, run_inference
 from navigation import build_navigation
@@ -111,7 +111,9 @@ def main() -> None:
             # VLM as detected_people; the VLM only reads background + builds the
             # costmap + picks a heading (see prompt.txt). --no-grounding skips the
             # injection (the VLM gets no sensor help) for comparison.
-            detected = detect_people(image_path)
+            detected, depth_map, img_w, img_h = analyze_image(image_path)
+            person_zones = {d["zone"] for d in detected}
+            zone_obstacles = detect_zone_obstacles(depth_map, img_w, img_h, person_zones)
             context: dict = {}
             if detected and not args.no_grounding:
                 context["detected_people"] = [
@@ -135,7 +137,7 @@ def main() -> None:
                 max_new_tokens=int(os.environ.get("INTERNVL_MAX_NEW_TOKENS", "640")),
                 local_files_only=os.environ.get("INTERNVL_LOCAL_FILES_ONLY", "0") == "1",
             )
-            semantic_json = build_navigation(raw_result, detected)
+            semantic_json = build_navigation(raw_result, detected, zone_obstacles)
             evaluation = evaluate_observation(semantic_json)
             elapsed = round(time.perf_counter() - started, 2)
             entry = save_run(

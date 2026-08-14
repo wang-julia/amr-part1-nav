@@ -163,3 +163,19 @@ def clear_runs() -> int:
                 (IMAGES_DIR / image_name).unlink(missing_ok=True)
         _write_unlocked([])
     return len(entries)
+
+
+def delete_run(run_id: str) -> bool:
+    """Delete a single history record and its copied image. Returns True if found."""
+    with HISTORY_LOCK:
+        entries = _read_unlocked()
+        remaining = [entry for entry in entries if entry.get("id") != run_id]
+        if len(remaining) == len(entries):
+            return False
+        for entry in entries:
+            if entry.get("id") == run_id:
+                image_name = Path(str(entry.get("image_file", ""))).name
+                if image_name:
+                    (IMAGES_DIR / image_name).unlink(missing_ok=True)
+        _write_unlocked(remaining)
+    return True

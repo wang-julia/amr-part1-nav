@@ -1,5 +1,637 @@
 [
   {
+    "id": "e0a1e804232f42fdb5d24dcbb2baf3c8",
+    "batch_id": "web-1786703378404",
+    "trial_index": 1,
+    "created_at": "2026-08-14T10:30:01.117586+00:00",
+    "filename": "22_crowd_middleopen.jpg",
+    "image_file": "e0a1e804232f42fdb5d24dcbb2baf3c8.jpg",
+    "model": "OpenGVLab/InternVL2_5-4B",
+    "seed": 382408819,
+    "temperature": 0.25,
+    "elapsed_seconds": 22.69,
+    "prompt": "You are the navigation perception module of an autonomous mobile robot.\nReturn only valid JSON.\n\nPeople have already been detected by a separate sensor stack (listed in the\nscene context below as detected_people). IGNORE the people entirely for this\ntask \u2014 a downstream planner accounts for them separately. Your ONLY job is to\nread the permanent background and rate how much open floor the robot has in\neach of five vertical zones: left, center_left, center, center_right, right.\n\nFor each zone, imagine no people are present. Could the robot physically drive\nforward 2-3 meters into that zone?\n- open: clear floor or corridor ahead\n- narrow: passable but tight, under roughly one body-width of clearance\n- blocked: a wall, closed door, or fixed obstacle immediately ahead\n\nRate the physical environment ONLY:\n- A person standing in a zone does NOT make it blocked \u2014 ignore people.\n- A wall far in the background does NOT make a zone blocked when there is open\n  floor between the robot and that wall.\n\nenvironment_type: hallway, open_room, lobby, outdoor, doorway, or other.\n\nReturn ONLY this JSON, no markdown, no prose:\n{\n  \"environment_type\": \"<hallway|open_room|lobby|outdoor|doorway|other>\",\n  \"space_analysis\": {\n    \"left_space\": \"<open|narrow|blocked>\",\n    \"center_left_space\": \"<open|narrow|blocked>\",\n    \"center_space\": \"<open|narrow|blocked>\",\n    \"center_right_space\": \"<open|narrow|blocked>\",\n    \"right_space\": \"<open|narrow|blocked>\",\n    \"space_notes\": \"<one sentence on the navigable background layout>\"\n  }\n}",
+    "effective_prompt": "You are the navigation perception module of an autonomous mobile robot.\nReturn only valid JSON.\n\nPeople have already been detected by a separate sensor stack (listed in the\nscene context below as detected_people). IGNORE the people entirely for this\ntask \u2014 a downstream planner accounts for them separately. Your ONLY job is to\nread the permanent background and rate how much open floor the robot has in\neach of five vertical zones: left, center_left, center, center_right, right.\n\nFor each zone, imagine no people are present. Could the robot physically drive\nforward 2-3 meters into that zone?\n- open: clear floor or corridor ahead\n- narrow: passable but tight, under roughly one body-width of clearance\n- blocked: a wall, closed door, or fixed obstacle immediately ahead\n\nRate the physical environment ONLY:\n- A person standing in a zone does NOT make it blocked \u2014 ignore people.\n- A wall far in the background does NOT make a zone blocked when there is open\n  floor between the robot and that wall.\n\nenvironment_type: hallway, open_room, lobby, outdoor, doorway, or other.\n\nReturn ONLY this JSON, no markdown, no prose:\n{\n  \"environment_type\": \"<hallway|open_room|lobby|outdoor|doorway|other>\",\n  \"space_analysis\": {\n    \"left_space\": \"<open|narrow|blocked>\",\n    \"center_left_space\": \"<open|narrow|blocked>\",\n    \"center_space\": \"<open|narrow|blocked>\",\n    \"center_right_space\": \"<open|narrow|blocked>\",\n    \"right_space\": \"<open|narrow|blocked>\",\n    \"space_notes\": \"<one sentence on the navigable background layout>\"\n  }\n}\n\nOptional scene context:\n{\n  \"detected_people\": [\n    {\n      \"id\": \"detected_1\",\n      \"zone\": \"center\",\n      \"depth\": \"mid\",\n      \"depth_rank\": 3\n    },\n    {\n      \"id\": \"detected_2\",\n      \"zone\": \"center\",\n      \"depth\": \"far\",\n      \"depth_rank\": 5\n    },\n    {\n      \"id\": \"detected_3\",\n      \"zone\": \"center\",\n      \"depth\": \"far\",\n      \"depth_rank\": 6\n    },\n    {\n      \"id\": \"detected_4\",\n      \"zone\": \"right\",\n      \"depth\": \"near\",\n      \"depth_rank\": 1\n    },\n    {\n      \"id\": \"detected_5\",\n      \"zone\": \"center_right\",\n      \"depth\": \"far\",\n      \"depth_rank\": 8\n    },\n    {\n      \"id\": \"detected_6\",\n      \"zone\": \"center_right\",\n      \"depth\": \"far\",\n      \"depth_rank\": 9\n    },\n    {\n      \"id\": \"detected_7\",\n      \"zone\": \"center_left\",\n      \"depth\": \"mid\",\n      \"depth_rank\": 2\n    },\n    {\n      \"id\": \"detected_8\",\n      \"zone\": \"center_right\",\n      \"depth\": \"far\",\n      \"depth_rank\": 8\n    },\n    {\n      \"id\": \"detected_9\",\n      \"zone\": \"right\",\n      \"depth\": \"mid\",\n      \"depth_rank\": 4\n    },\n    {\n      \"id\": \"detected_10\",\n      \"zone\": \"center_right\",\n      \"depth\": \"far\",\n      \"depth_rank\": 7\n    }\n  ]\n}\n\nReturn only the requested valid JSON object.",
+    "context": {
+      "detected_people": [
+        {
+          "id": "detected_1",
+          "zone": "center",
+          "depth": "mid",
+          "depth_rank": 3
+        },
+        {
+          "id": "detected_2",
+          "zone": "center",
+          "depth": "far",
+          "depth_rank": 5
+        },
+        {
+          "id": "detected_3",
+          "zone": "center",
+          "depth": "far",
+          "depth_rank": 6
+        },
+        {
+          "id": "detected_4",
+          "zone": "right",
+          "depth": "near",
+          "depth_rank": 1
+        },
+        {
+          "id": "detected_5",
+          "zone": "center_right",
+          "depth": "far",
+          "depth_rank": 8
+        },
+        {
+          "id": "detected_6",
+          "zone": "center_right",
+          "depth": "far",
+          "depth_rank": 9
+        },
+        {
+          "id": "detected_7",
+          "zone": "center_left",
+          "depth": "mid",
+          "depth_rank": 2
+        },
+        {
+          "id": "detected_8",
+          "zone": "center_right",
+          "depth": "far",
+          "depth_rank": 8
+        },
+        {
+          "id": "detected_9",
+          "zone": "right",
+          "depth": "mid",
+          "depth_rank": 4
+        },
+        {
+          "id": "detected_10",
+          "zone": "center_right",
+          "depth": "far",
+          "depth_rank": 7
+        }
+      ]
+    },
+    "semantic_json": {
+      "environment_type": "hallway",
+      "space_analysis": {
+        "left_space": "open",
+        "center_left_space": "open",
+        "center_space": "open",
+        "center_right_space": "open",
+        "right_space": "open",
+        "space_notes": "The hallway is wide with no visible obstacles or walls in the immediate path."
+      },
+      "costmap": {
+        "left": 75,
+        "center_left": 35,
+        "center": 65,
+        "center_right": 60,
+        "right": 95
+      },
+      "recommended_direction": "left",
+      "recommended_angle": -36,
+      "reason": "center left has the lowest cost (35); steering -36\u00b0 there, avoiding 10 detected person(s) in center, center_left, center_right, right."
+    },
+    "evaluation": {
+      "valid": true,
+      "issues": []
+    },
+    "detections": [
+      {
+        "id": "detected_1",
+        "bbox": [
+          730.5,
+          311.0,
+          886.9,
+          797.7
+        ],
+        "bbox_pct": [
+          45.7,
+          29.1,
+          55.4,
+          74.8
+        ],
+        "confidence": 0.865,
+        "zone": "center",
+        "bbox_center_x_pct": 50.5,
+        "depth_value": 2.1423423290252686,
+        "depth_rank": 3,
+        "depth": "mid"
+      },
+      {
+        "id": "detected_2",
+        "bbox": [
+          851.1,
+          253.8,
+          970.8,
+          738.5
+        ],
+        "bbox_pct": [
+          53.2,
+          23.8,
+          60.7,
+          69.2
+        ],
+        "confidence": 0.852,
+        "zone": "center",
+        "bbox_center_x_pct": 56.9,
+        "depth_value": 1.6955686807632446,
+        "depth_rank": 5,
+        "depth": "far"
+      },
+      {
+        "id": "detected_3",
+        "bbox": [
+          637.1,
+          234.2,
+          774.9,
+          738.4
+        ],
+        "bbox_pct": [
+          39.8,
+          21.9,
+          48.4,
+          69.2
+        ],
+        "confidence": 0.839,
+        "zone": "center",
+        "bbox_center_x_pct": 44.1,
+        "depth_value": 1.5962105989456177,
+        "depth_rank": 6,
+        "depth": "far"
+      },
+      {
+        "id": "detected_4",
+        "bbox": [
+          1308.0,
+          192.8,
+          1531.1,
+          981.2
+        ],
+        "bbox_pct": [
+          81.7,
+          18.1,
+          95.7,
+          92.0
+        ],
+        "confidence": 0.824,
+        "zone": "right",
+        "bbox_center_x_pct": 88.7,
+        "depth_value": 3.908327341079712,
+        "depth_rank": 1,
+        "depth": "near"
+      },
+      {
+        "id": "detected_5",
+        "bbox": [
+          966.7,
+          319.5,
+          1078.9,
+          637.4
+        ],
+        "bbox_pct": [
+          60.4,
+          29.9,
+          67.4,
+          59.7
+        ],
+        "confidence": 0.817,
+        "zone": "center_right",
+        "bbox_center_x_pct": 63.9,
+        "depth_value": 0.8324985504150391,
+        "depth_rank": 8,
+        "depth": "far"
+      },
+      {
+        "id": "detected_6",
+        "bbox": [
+          1132.1,
+          350.0,
+          1206.4,
+          584.0
+        ],
+        "bbox_pct": [
+          70.8,
+          32.8,
+          75.4,
+          54.7
+        ],
+        "confidence": 0.748,
+        "zone": "center_right",
+        "bbox_center_x_pct": 73.1,
+        "depth_value": 0.45495378971099854,
+        "depth_rank": 9,
+        "depth": "far"
+      },
+      {
+        "id": "detected_7",
+        "bbox": [
+          377.6,
+          197.9,
+          644.5,
+          536.2
+        ],
+        "bbox_pct": [
+          23.6,
+          18.6,
+          40.3,
+          50.3
+        ],
+        "confidence": 0.748,
+        "zone": "center_left",
+        "bbox_center_x_pct": 31.9,
+        "depth_value": 2.8522748947143555,
+        "depth_rank": 2,
+        "depth": "mid"
+      },
+      {
+        "id": "detected_8",
+        "bbox": [
+          1178.8,
+          351.4,
+          1235.7,
+          639.1
+        ],
+        "bbox_pct": [
+          73.7,
+          32.9,
+          77.2,
+          59.9
+        ],
+        "confidence": 0.524,
+        "zone": "center_right",
+        "bbox_center_x_pct": 75.5,
+        "depth_value": 0.785978376865387,
+        "depth_rank": 8,
+        "depth": "far"
+      },
+      {
+        "id": "detected_9",
+        "bbox": [
+          1263.2,
+          288.0,
+          1376.7,
+          548.5
+        ],
+        "bbox_pct": [
+          78.9,
+          27.0,
+          86.0,
+          51.4
+        ],
+        "confidence": 0.483,
+        "zone": "right",
+        "bbox_center_x_pct": 82.5,
+        "depth_value": 2.0406899452209473,
+        "depth_rank": 4,
+        "depth": "mid"
+      },
+      {
+        "id": "detected_10",
+        "bbox": [
+          1216.5,
+          286.2,
+          1308.9,
+          692.8
+        ],
+        "bbox_pct": [
+          76.0,
+          26.8,
+          81.8,
+          64.9
+        ],
+        "confidence": 0.472,
+        "zone": "center_right",
+        "bbox_center_x_pct": 78.9,
+        "depth_value": 1.204073429107666,
+        "depth_rank": 7,
+        "depth": "far"
+      }
+    ],
+    "detection_comparison": null
+  },
+  {
+    "id": "edd85da890e949318a73036c1fb90a1e",
+    "batch_id": "web-1786703305906",
+    "trial_index": 1,
+    "created_at": "2026-08-14T10:29:02.366778+00:00",
+    "filename": "21_crowd_leftopen.jpg",
+    "image_file": "edd85da890e949318a73036c1fb90a1e.jpg",
+    "model": "OpenGVLab/InternVL2_5-4B",
+    "seed": 1693945239,
+    "temperature": 0.25,
+    "elapsed_seconds": 36.45,
+    "prompt": "You are the navigation perception module of an autonomous mobile robot.\nReturn only valid JSON.\n\nPeople have already been detected by a separate sensor stack (listed in the\nscene context below as detected_people). IGNORE the people entirely for this\ntask \u2014 a downstream planner accounts for them separately. Your ONLY job is to\nread the permanent background and rate how much open floor the robot has in\neach of five vertical zones: left, center_left, center, center_right, right.\n\nFor each zone, imagine no people are present. Could the robot physically drive\nforward 2-3 meters into that zone?\n- open: clear floor or corridor ahead\n- narrow: passable but tight, under roughly one body-width of clearance\n- blocked: a wall, closed door, or fixed obstacle immediately ahead\n\nRate the physical environment ONLY:\n- A person standing in a zone does NOT make it blocked \u2014 ignore people.\n- A wall far in the background does NOT make a zone blocked when there is open\n  floor between the robot and that wall.\n\nenvironment_type: hallway, open_room, lobby, outdoor, doorway, or other.\n\nReturn ONLY this JSON, no markdown, no prose:\n{\n  \"environment_type\": \"<hallway|open_room|lobby|outdoor|doorway|other>\",\n  \"space_analysis\": {\n    \"left_space\": \"<open|narrow|blocked>\",\n    \"center_left_space\": \"<open|narrow|blocked>\",\n    \"center_space\": \"<open|narrow|blocked>\",\n    \"center_right_space\": \"<open|narrow|blocked>\",\n    \"right_space\": \"<open|narrow|blocked>\",\n    \"space_notes\": \"<one sentence on the navigable background layout>\"\n  }\n}",
+    "effective_prompt": "You are the navigation perception module of an autonomous mobile robot.\nReturn only valid JSON.\n\nPeople have already been detected by a separate sensor stack (listed in the\nscene context below as detected_people). IGNORE the people entirely for this\ntask \u2014 a downstream planner accounts for them separately. Your ONLY job is to\nread the permanent background and rate how much open floor the robot has in\neach of five vertical zones: left, center_left, center, center_right, right.\n\nFor each zone, imagine no people are present. Could the robot physically drive\nforward 2-3 meters into that zone?\n- open: clear floor or corridor ahead\n- narrow: passable but tight, under roughly one body-width of clearance\n- blocked: a wall, closed door, or fixed obstacle immediately ahead\n\nRate the physical environment ONLY:\n- A person standing in a zone does NOT make it blocked \u2014 ignore people.\n- A wall far in the background does NOT make a zone blocked when there is open\n  floor between the robot and that wall.\n\nenvironment_type: hallway, open_room, lobby, outdoor, doorway, or other.\n\nReturn ONLY this JSON, no markdown, no prose:\n{\n  \"environment_type\": \"<hallway|open_room|lobby|outdoor|doorway|other>\",\n  \"space_analysis\": {\n    \"left_space\": \"<open|narrow|blocked>\",\n    \"center_left_space\": \"<open|narrow|blocked>\",\n    \"center_space\": \"<open|narrow|blocked>\",\n    \"center_right_space\": \"<open|narrow|blocked>\",\n    \"right_space\": \"<open|narrow|blocked>\",\n    \"space_notes\": \"<one sentence on the navigable background layout>\"\n  }\n}\n\nOptional scene context:\n{\n  \"detected_people\": [\n    {\n      \"id\": \"detected_1\",\n      \"zone\": \"right\",\n      \"depth\": \"near\",\n      \"depth_rank\": 1\n    },\n    {\n      \"id\": \"detected_2\",\n      \"zone\": \"center_left\",\n      \"depth\": \"far\",\n      \"depth_rank\": 3\n    },\n    {\n      \"id\": \"detected_3\",\n      \"zone\": \"center\",\n      \"depth\": \"far\",\n      \"depth_rank\": 2\n    },\n    {\n      \"id\": \"detected_4\",\n      \"zone\": \"left\",\n      \"depth\": \"far\",\n      \"depth_rank\": 6\n    },\n    {\n      \"id\": \"detected_5\",\n      \"zone\": \"left\",\n      \"depth\": \"far\",\n      \"depth_rank\": 7\n    },\n    {\n      \"id\": \"detected_6\",\n      \"zone\": \"center_left\",\n      \"depth\": \"far\",\n      \"depth_rank\": 7\n    },\n    {\n      \"id\": \"detected_7\",\n      \"zone\": \"left\",\n      \"depth\": \"far\",\n      \"depth_rank\": 7\n    },\n    {\n      \"id\": \"detected_8\",\n      \"zone\": \"center_left\",\n      \"depth\": \"far\",\n      \"depth_rank\": 5\n    },\n    {\n      \"id\": \"detected_9\",\n      \"zone\": \"center\",\n      \"depth\": \"far\",\n      \"depth_rank\": 4\n    },\n    {\n      \"id\": \"detected_10\",\n      \"zone\": \"center\",\n      \"depth\": \"far\",\n      \"depth_rank\": 6\n    }\n  ]\n}\n\nReturn only the requested valid JSON object.",
+    "context": {
+      "detected_people": [
+        {
+          "id": "detected_1",
+          "zone": "right",
+          "depth": "near",
+          "depth_rank": 1
+        },
+        {
+          "id": "detected_2",
+          "zone": "center_left",
+          "depth": "far",
+          "depth_rank": 3
+        },
+        {
+          "id": "detected_3",
+          "zone": "center",
+          "depth": "far",
+          "depth_rank": 2
+        },
+        {
+          "id": "detected_4",
+          "zone": "left",
+          "depth": "far",
+          "depth_rank": 6
+        },
+        {
+          "id": "detected_5",
+          "zone": "left",
+          "depth": "far",
+          "depth_rank": 7
+        },
+        {
+          "id": "detected_6",
+          "zone": "center_left",
+          "depth": "far",
+          "depth_rank": 7
+        },
+        {
+          "id": "detected_7",
+          "zone": "left",
+          "depth": "far",
+          "depth_rank": 7
+        },
+        {
+          "id": "detected_8",
+          "zone": "center_left",
+          "depth": "far",
+          "depth_rank": 5
+        },
+        {
+          "id": "detected_9",
+          "zone": "center",
+          "depth": "far",
+          "depth_rank": 4
+        },
+        {
+          "id": "detected_10",
+          "zone": "center",
+          "depth": "far",
+          "depth_rank": 6
+        }
+      ]
+    },
+    "semantic_json": {
+      "environment_type": "hallway",
+      "space_analysis": {
+        "left_space": "narrow",
+        "center_left_space": "open",
+        "center_space": "open",
+        "center_right_space": "narrow",
+        "right_space": "blocked",
+        "space_notes": "The hallway is narrow with a wall immediately ahead in the right zone."
+      },
+      "costmap": {
+        "left": 65,
+        "center_left": 45,
+        "center": 45,
+        "center_right": 20,
+        "right": 100
+      },
+      "recommended_direction": "right",
+      "recommended_angle": 36,
+      "reason": "center right has the lowest cost (20); steering 36\u00b0 there, avoiding 10 detected person(s) in center, center_left, left, right."
+    },
+    "evaluation": {
+      "valid": true,
+      "issues": []
+    },
+    "detections": [
+      {
+        "id": "detected_1",
+        "bbox": [
+          1275.9,
+          11.4,
+          1598.8,
+          1056.3
+        ],
+        "bbox_pct": [
+          79.7,
+          1.1,
+          99.9,
+          99.0
+        ],
+        "confidence": 0.939,
+        "zone": "right",
+        "bbox_center_x_pct": 89.8,
+        "depth_value": 8.651272773742676,
+        "depth_rank": 1,
+        "depth": "near"
+      },
+      {
+        "id": "detected_2",
+        "bbox": [
+          369.5,
+          441.0,
+          656.3,
+          979.7
+        ],
+        "bbox_pct": [
+          23.1,
+          41.3,
+          41.0,
+          91.8
+        ],
+        "confidence": 0.887,
+        "zone": "center_left",
+        "bbox_center_x_pct": 32.1,
+        "depth_value": 2.3382396697998047,
+        "depth_rank": 3,
+        "depth": "far"
+      },
+      {
+        "id": "detected_3",
+        "bbox": [
+          695.6,
+          446.5,
+          961.5,
+          1055.3
+        ],
+        "bbox_pct": [
+          43.5,
+          41.8,
+          60.1,
+          98.9
+        ],
+        "confidence": 0.868,
+        "zone": "center",
+        "bbox_center_x_pct": 51.8,
+        "depth_value": 2.7537825107574463,
+        "depth_rank": 2,
+        "depth": "far"
+      },
+      {
+        "id": "detected_4",
+        "bbox": [
+          0.0,
+          108.9,
+          100.4,
+          716.9
+        ],
+        "bbox_pct": [
+          0.0,
+          10.2,
+          6.3,
+          67.2
+        ],
+        "confidence": 0.824,
+        "zone": "left",
+        "bbox_center_x_pct": 3.1,
+        "depth_value": 0.8093382120132446,
+        "depth_rank": 6,
+        "depth": "far"
+      },
+      {
+        "id": "detected_5",
+        "bbox": [
+          166.1,
+          102.1,
+          311.9,
+          640.3
+        ],
+        "bbox_pct": [
+          10.4,
+          9.6,
+          19.5,
+          60.0
+        ],
+        "confidence": 0.804,
+        "zone": "left",
+        "bbox_center_x_pct": 14.9,
+        "depth_value": 0.581045389175415,
+        "depth_rank": 7,
+        "depth": "far"
+      },
+      {
+        "id": "detected_6",
+        "bbox": [
+          297.1,
+          141.9,
+          470.1,
+          618.8
+        ],
+        "bbox_pct": [
+          18.6,
+          13.3,
+          29.4,
+          58.0
+        ],
+        "confidence": 0.803,
+        "zone": "center_left",
+        "bbox_center_x_pct": 24.0,
+        "depth_value": 0.3983314633369446,
+        "depth_rank": 7,
+        "depth": "far"
+      },
+      {
+        "id": "detected_7",
+        "bbox": [
+          43.7,
+          88.0,
+          177.3,
+          621.3
+        ],
+        "bbox_pct": [
+          2.7,
+          8.2,
+          11.1,
+          58.2
+        ],
+        "confidence": 0.745,
+        "zone": "left",
+        "bbox_center_x_pct": 6.9,
+        "depth_value": 0.5622110962867737,
+        "depth_rank": 7,
+        "depth": "far"
+      },
+      {
+        "id": "detected_8",
+        "bbox": [
+          474.3,
+          125.6,
+          750.8,
+          914.6
+        ],
+        "bbox_pct": [
+          29.6,
+          11.8,
+          46.9,
+          85.7
+        ],
+        "confidence": 0.724,
+        "zone": "center_left",
+        "bbox_center_x_pct": 38.3,
+        "depth_value": 1.8485264778137207,
+        "depth_rank": 5,
+        "depth": "far"
+      },
+      {
+        "id": "detected_9",
+        "bbox": [
+          655.3,
+          268.4,
+          850.9,
+          910.3
+        ],
+        "bbox_pct": [
+          41.0,
+          25.2,
+          53.2,
+          85.3
+        ],
+        "confidence": 0.578,
+        "zone": "center",
+        "bbox_center_x_pct": 47.1,
+        "depth_value": 2.167417526245117,
+        "depth_rank": 4,
+        "depth": "far"
+      },
+      {
+        "id": "detected_10",
+        "bbox": [
+          653.1,
+          133.7,
+          747.7,
+          275.2
+        ],
+        "bbox_pct": [
+          40.8,
+          12.5,
+          46.7,
+          25.8
+        ],
+        "confidence": 0.351,
+        "zone": "center",
+        "bbox_center_x_pct": 43.8,
+        "depth_value": 0.9233564734458923,
+        "depth_rank": 6,
+        "depth": "far"
+      }
+    ],
+    "detection_comparison": null
+  },
+  {
     "id": "87150f0664df448490c9047bc85680cc",
     "batch_id": "web-1786628061368",
     "trial_index": 1,

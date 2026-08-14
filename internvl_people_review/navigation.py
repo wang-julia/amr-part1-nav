@@ -21,7 +21,11 @@ SPACE_COST = {"open": 0, "narrow": 20, "blocked": 45}
 HOLD_THRESHOLD = 100  # if even the best zone is this costly, hold instead of moving
 
 
-def build_costmap(detections: list[dict], space_analysis: Any) -> dict[str, int]:
+def build_costmap(
+    detections: list[dict],
+    space_analysis: Any,
+    zone_obstacles: "dict[str, int] | None" = None,
+) -> dict[str, int]:
     space = space_analysis if isinstance(space_analysis, dict) else {}
     cost = {zone: 0 for zone in ZONES}
     for d in detections or []:
@@ -30,6 +34,7 @@ def build_costmap(detections: list[dict], space_analysis: Any) -> dict[str, int]
             cost[zone] += DEPTH_COST.get(d.get("depth"), DEPTH_COST["far"])
     for zone in ZONES:
         cost[zone] += SPACE_COST.get(space.get(f"{zone}_space"), 0)
+        cost[zone] += (zone_obstacles or {}).get(zone, 0)
         cost[zone] = min(100, cost[zone])
     return cost
 
@@ -63,13 +68,17 @@ def recommend_heading(cost: dict[str, int], detections: list[dict]) -> dict[str,
     }
 
 
-def build_navigation(vlm_json: Any, detections: list[dict]) -> dict[str, Any]:
+def build_navigation(
+    vlm_json: Any,
+    detections: list[dict],
+    zone_obstacles: "dict[str, int] | None" = None,
+) -> dict[str, Any]:
     """Merge the VLM's background reading with a code-computed costmap + heading
     into the full navigation JSON the rest of the app expects."""
     vlm = vlm_json if isinstance(vlm_json, dict) else {}
     space_analysis = vlm.get("space_analysis")
     space_analysis = space_analysis if isinstance(space_analysis, dict) else {}
-    costmap = build_costmap(detections, space_analysis)
+    costmap = build_costmap(detections, space_analysis, zone_obstacles)
     heading = recommend_heading(costmap, detections)
     return {
         "environment_type": vlm.get("environment_type", "other"),

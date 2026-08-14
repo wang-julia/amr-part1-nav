@@ -12,6 +12,14 @@ PERSON_CLASS_ID = 0
 ZONES = ("left", "center_left", "center", "center_right", "right")
 ZONE_BOUNDARIES_PCT = (20.0, 40.0, 60.0, 80.0)
 
+# Obstacle (wall/door) detection from the depth map.
+# Sample rows 15%–60% of the image: above floor, below ceiling.
+OBSTACLE_ROW_BAND = (0.15, 0.60)
+# Normalized depth (0=far, 1=near) above which a zone is treated as walled.
+OBSTACLE_DEPTH_THRESHOLD = 0.70
+# Cost added to a zone where a close obstacle is detected.
+OBSTACLE_ZONE_COST = 75
+
 _YOLO_CACHE: dict[tuple, Any] = {}
 _DEPTH_CACHE: dict[tuple, Any] = {}
 
@@ -219,6 +227,49 @@ def render_depth_heatmap(depth_map, colormap: str = "inferno") -> bytes:
     buffer = io.BytesIO()
     Image.fromarray(colored).save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def detect_zone_obstacles(
+    depth_map,
+    image_width: int,
+    image_height: int,
+    person_zones: "set[str] | None" = None,
+) -> dict[str, int]:
+    """Return per-zone obstacle cost derived purely from the depth map.
+
+    Scans a mid-image row band (skipping floor and ceiling) in each horizontal
+    zone. If the median depth there is close (normalized >= OBSTACLE_DEPTH_THRESHOLD),
+    the zone likely contains a wall or hard obstacle and gets OBSTACLE_ZONE_COST.
+
+    person_zones: set of zones already occupied by YOLO-detected people; those
+    zones are skipped so people are not mistaken for walls.
+    """
+    import torch
+
+    depth_height, depth_width = depth_map.shape[-2:]
+    depth_low = float(depth_map.min())
+    depth_high = float(depth_map.max())
+    span = depth_high - depth_low
+
+    row_start = int(OBSTACLE_ROW_BAND[0] * depth_height)
+    row_end = max(row_start + 1, int(OBSTACLE_ROW_BAND[1] * depth_height))
+
+    col_boundaries = [0.0] + [b / 100.0 for b in ZONE_BOUNDARIES_PCT] + [1.0]
+    obstacles: dict[str, int] = {}
+    for zone, col_lo, col_hi in zip(ZONES, col_boundaries, col_boundaries[1:]):
+        if person_zones and zone in person_zones:
+            obstacles[zone] = 0
+            continue
+        col_start = int(col_lo * depth_width)
+        col_end = max(col_start + 1, int(col_hi * depth_width))
+        region = depth_map[row_start:row_end, col_start:col_end]
+        if region.numel() == 0:
+            obstacles[zone] = 0
+            continue
+        median_val = float(torch.median(region))
+        normalized = (median_val - depth_low) / span if span > 0 else 0.5
+        obstacles[zone] = OBSTACLE_ZONE_COST if normalized >= OBSTACLE_DEPTH_THRESHOLD else 0
+    return obstacles
 
 
 if __name__ == "__main__":
