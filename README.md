@@ -4,7 +4,7 @@ A real-time perception stack for an Autonomous Mobile Robot (AMR) that combines 
 
 The robot looks at a camera frame, detects people + walls, builds a cost map across 5 forward zones, and picks a heading — all without human input.
 
-![MVP2 Robot](readme_images/mvp2robot.png)
+<img src="readme_images/mvp2robot.png" width="300"/>
 
 ---
 
