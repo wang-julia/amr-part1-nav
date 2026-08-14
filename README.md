@@ -2,7 +2,7 @@
 
 A real-time perception stack for an Autonomous Mobile Robot (AMR) that combines classical computer vision with vision-language models to navigate crowds safely.
 
-The robot looks at a camera frame, detects people + walls, builds a cost map across 5 forward zones, and picks a heading — all without human input.
+The robot looks at a camera frame, detects people + walls, builds a cost map across 5 forward zones, and picks a heading.
 
 <img src="readme_images/mvp2robot.png" width="300"/>
 
@@ -30,7 +30,7 @@ Camera frame
                → lowest-cost zone wins → bearing angle output
 ```
 
-**Key design decision:** InternVL classifies background space (walls, doorways, narrow gaps). It never picks the heading. The heading is always computed deterministically from the costmap — people cost + wall cost + space classification.
+**Key design decision:** InternVL classifies background space (walls, doorways, narrow gaps). It never picks the heading. The heading is always computed deterministically from the costmap: people cost + wall cost + space classification.
 
 ---
 
