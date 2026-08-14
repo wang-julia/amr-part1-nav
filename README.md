@@ -30,7 +30,7 @@ Camera frame
                → lowest-cost zone wins → bearing angle output
 ```
 
-**Key design decision:** InternVL classifies background space (walls, doorways, narrow gaps). It never picks the heading. The heading is always computed deterministically from the costmap — people cost + wall cost + space classification.
+**Key design decision:** InternVL classifies background space (walls, doorways, narrow gaps). It never picks the heading. The heading is always computed deterministically from the costmap: people cost + wall cost + space classification.
 
 ---
 
