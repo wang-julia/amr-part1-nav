@@ -4,7 +4,7 @@ A real-time perception stack for an Autonomous Mobile Robot (AMR) that combines 
 
 The robot looks at a camera frame, detects people + walls, builds a cost map across 5 forward zones, and picks a heading.
 
-<img src="readme_images/mvp2robot.png" width="300"/>
+<img src="readme_images/mvp2robot.png" width="200"/>
 
 ---
 
@@ -92,34 +92,6 @@ python evaluate_folder.py --no-grounding   # A/B: skip sensor injection
 
 ---
 
-## File Structure
-
-```
-internvl_people_review/
-├── server.py              # HTTP server — /api/infer endpoint, serves the UI
-├── detection_runtime.py   # YOLO + Depth-Anything + SegFormer; costmap builder
-├── navigation.py          # Deterministic costmap fusion + heading selection
-├── internvl_runtime.py    # InternVL inference + JSON repair
-├── observations.py        # Schema validation for InternVL output
-├── evaluate_folder.py     # Batch runner over an image folder
-├── history_store.py       # Saves/loads run history as JSON + images
-├── prompt.txt             # InternVL system prompt (space classification only)
-├── requirements.txt
-├── yolov8n.pt             # Auto-downloaded on first run
-├── web/
-│   └── index.html         # Single-page UI — canvas overlay, costmap grid, history
-└── evaluation_set/
-    └── images/            # 25 test images (corridors, crowds, open rooms)
-
-vla-crowdsim/              # 2D crowd simulation — AMR navigates via social costmap
-                           # using the Helbing Social Force Model + 36-ray lidar
-
-social_nav_demo/           # Offline demo generator — fuses camera frames into
-                           # an animated navigation preview (no live server needed)
-```
-
----
-
 ## Demo Cases
 
 ### Case 1 — Outdoor crowd, multiple people at mid/far depth
@@ -167,6 +139,34 @@ One person at depth rank 1 (nearest) blocking the center zone. With only the cen
 A mother kneeling with a child — short stature means YOLO may undercount; SegFormer provides a floor-level cross-check. The corridor walls on both sides are classified as **blocked** by SegFormer (high `w%` wall coverage), which InternVL confirms. All five zones rated blocked; robot steers to center-left (lowest wall cost at 75) and avoids routing through detected walls.
 
 ![Case 5 — SegFormer](readme_images/5_segformer.png)
+
+---
+
+## File Structure
+
+```
+internvl_people_review/
+├── server.py              # HTTP server — /api/infer endpoint, serves the UI
+├── detection_runtime.py   # YOLO + Depth-Anything + SegFormer; costmap builder
+├── navigation.py          # Deterministic costmap fusion + heading selection
+├── internvl_runtime.py    # InternVL inference + JSON repair
+├── observations.py        # Schema validation for InternVL output
+├── evaluate_folder.py     # Batch runner over an image folder
+├── history_store.py       # Saves/loads run history as JSON + images
+├── prompt.txt             # InternVL system prompt (space classification only)
+├── requirements.txt
+├── yolov8n.pt             # Auto-downloaded on first run
+├── web/
+│   └── index.html         # Single-page UI — canvas overlay, costmap grid, history
+└── evaluation_set/
+    └── images/            # 25 test images (corridors, crowds, open rooms)
+
+vla-crowdsim/              # 2D crowd simulation — AMR navigates via social costmap
+                           # using the Helbing Social Force Model + 36-ray lidar
+
+social_nav_demo/           # Offline demo generator — fuses camera frames into
+                           # an animated navigation preview (no live server needed)
+```
 
 ---
 
