@@ -2,7 +2,7 @@
 
 A real-time perception stack for an Autonomous Mobile Robot (AMR) that combines classical computer vision with vision-language models to navigate crowds safely.
 
-Please note that this is not the full company-deployed codebase.
+*Please note that this is not the full company-deployed codebase.
 
 The robot looks at a camera frame, detects people + walls, builds a cost map across 5 forward zones, and picks a heading.
 
